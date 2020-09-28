@@ -1,0 +1,29 @@
+{
+  "_id": "5f323410874a4301a1aa8b82",
+  "index": 0,
+  "guid": "c11fcdd5-1f32-4106-8b41-9b0107f76223",
+  "isActive": false,
+  "balance": "$1,381.50",
+  "picture": "http://placehold.it/32x32",
+  "age": 30,
+  "eyeColor": "brown",
+  "name": {
+    "first": "Collier",
+    "last": "Jensen"
+  },
+  "company": "ENTOGROK",
+  "email": "collier.jensen@entogrok.com",
+  "phone": "+1 (937) 525-3426",
+  "address": "734 Mayfair Drive, Golconda, Colorado, 4058",
+  "about": "Veniam excepteur consectetur exercitation tempor qui. Anim sit nulla nostrud eiusmod fugiat aute aute duis. Eu excepteur aliquip cupidatat amet excepteur Lorem eiusmod deserunt labore.",
+  "registered": "Saturday, November 30, 2019 12:46 AM",
+  "latitude": "-20.015177",
+  "longitude": "26.566278",
+  "tags": [
+    "labore",
+    "in",
+    "tempor",
+    "magna",
+    "dolore"
+  ]
+}

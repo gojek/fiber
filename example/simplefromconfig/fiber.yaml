@@ -1,0 +1,13 @@
+type: EAGER_ROUTER
+id: eager_router
+strategy:
+  type: fiber.RandomRoutingStrategy
+routes:
+  - id: route_a
+    type: PROXY
+    timeout: "20s"
+    endpoint: "http://localhost:8080/routes/route-a"
+  - id: route_b
+    type: PROXY
+    timeout: "40s"
+    endpoint: "http://localhost:8080/routes/route-b"
