@@ -60,11 +60,13 @@ func (r *Request) Clone() (fiber.Request, error) {
 		return nil, err
 	}
 
-	for key, values := range r.Header() {
-		for i := range values {
-			proxyRequest.Header.Add(key, values[i])
-		}
+	proxyRequest.GetBody = func() (io.ReadCloser, error) {
+		r := bytes.NewReader(r.Payload())
+		return ioutil.NopCloser(r), nil
 	}
+
+	proxyRequest.Header = r.Header()
+
 	return &Request{CachedPayload: r.CachedPayload, Request: proxyRequest}, nil
 }
 
