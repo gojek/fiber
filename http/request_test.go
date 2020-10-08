@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
-
-	"github.com/stretchr/testify/require"
+	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
 	"github.com/gojek/fiber/internal/testutils"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var requestPayload, _ = testutils.ReadFile("../internal/testdata/request_payload.json")
@@ -100,25 +100,38 @@ func TestRequest_Clone(t *testing.T) {
 		"http://localhost:9999/api/mock",
 		strings.NewReader("*** request payload ***"),
 	))
+	req.Request.Header = http.Header{
+		"fiber-key": []string{
+			fmt.Sprintf("test-%d", time.Now().Unix()),
+		},
+	}
 
-	req.Request.Header.Add("fiber-key", fmt.Sprintf("test-%d", time.Now().Unix()))
+	compareRequests := func(t *testing.T, original *fiberHTTP.Request, clone fiber.Request) {
+		clonedReq, ok := clone.(*fiberHTTP.Request)
+		require.True(t, ok, "clone should have the same type as the original")
 
-	cloned, err := req.Clone()
+		require.NotEqual(t, original, clonedReq)
+		require.Equal(t, original.Header(), clonedReq.Header())
+
+		expectedBody, err := original.GetBody()
+		require.NoError(t, err)
+		require.Equal(t, readBytes(expectedBody), readBytes(clonedReq.Body))
+		require.Equal(t, req.URL, clonedReq.URL)
+	}
+
+	clone, err := req.Clone()
 	require.NoError(t, err)
 
-	copyReq, ok := cloned.(*fiberHTTP.Request)
+	t.Run("success", func(t *testing.T) {
+		compareRequests(t, req, clone)
+	})
 
-	require.True(t, ok, "clone should have the same type as the original")
+	cloneOfClone, err := clone.Clone()
+	require.NoError(t, err)
 
-	require.NotEqual(t, req, copyReq)
-	require.Equal(t, req.Header(), copyReq.Header())
-
-	expectedBody, err1 := req.GetBody()
-
-	require.NoError(t, err1)
-	require.Equal(t, readBytes(expectedBody), readBytes(copyReq.Body))
-
-	require.Equal(t, req.URL, copyReq.URL)
+	t.Run("success | clone of cloned", func(t *testing.T) {
+		compareRequests(t, req, cloneOfClone)
+	})
 }
 
 func TestRequest_OperationName(t *testing.T) {
