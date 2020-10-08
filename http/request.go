@@ -50,19 +50,15 @@ func NewHTTPRequest(req *http.Request) (*Request, error) {
 
 // Copy creates a deep copy of this request
 func (r *Request) Clone() (fiber.Request, error) {
-	body, err := r.GetBody()
-	if err != nil {
-		return nil, err
-	}
+	bodyReader := bytes.NewReader(r.Payload())
 
-	proxyRequest, err := http.NewRequest(r.Method, r.URL.String(), body)
+	proxyRequest, err := http.NewRequest(r.Method, r.URL.String(), bodyReader)
 	if err != nil {
 		return nil, err
 	}
 
 	proxyRequest.GetBody = func() (io.ReadCloser, error) {
-		r := bytes.NewReader(r.Payload())
-		return ioutil.NopCloser(r), nil
+		return ioutil.NopCloser(bodyReader), nil
 	}
 
 	proxyRequest.Header = r.Header()
