@@ -1,0 +1,16 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/leonlnj/fiber/gen/go
+    except:
+      - buf.build/googleapis/googleapis
+plugins:
+  - name: go
+    out: gen/proto/go
+    opt: paths=import,module=github.com/leonlnj/fiber/gen/go
+  - name: go-grpc
+    out: gen/proto/go
+    opt:
+      - paths=import,module=github.com/leonlnj/fiber/gen/go
+      - require_unimplemented_servers=false
