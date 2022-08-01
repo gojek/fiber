@@ -2,11 +2,12 @@ package http
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/errors"
+	fiberErrors "github.com/gojek/fiber/errors"
 )
 
 // Options captures a set of options that can be used as configurations for
@@ -45,7 +46,7 @@ func (h *Handler) ServeHTTP(writer http.ResponseWriter, httpReq *http.Request) {
 }
 
 // DoRequest executes the given http request and returns the response / error
-func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *errors.HTTPError) {
+func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors.HTTPError) {
 	if req, err := NewHTTPRequest(httpReq); err == nil {
 		ctx, cancel := context.WithTimeout(req.Context(), h.options.Timeout)
 		defer cancel()
@@ -55,12 +56,12 @@ func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *errors.HTTP
 			if ok {
 				return resp, nil
 			}
-			return nil, errors.ErrServiceUnavailable
+			return nil, fiberErrors.ErrServiceUnavailable
 		case <-time.After(h.options.Timeout):
-			return nil, errors.ErrRequestTimeout
+			return nil, fiberErrors.ErrRequestTimeout
 		}
 	} else {
-		return nil, errors.ErrReadRequestFailed(err)
+		return nil, fiberErrors.ErrReadRequestFailed(err)
 	}
 }
 
@@ -75,6 +76,10 @@ func (h *Handler) write(resp fiber.Response, writer http.ResponseWriter) (err er
 	}
 
 	writer.WriteHeader(resp.StatusCode())
-	_, err = writer.Write(resp.Payload())
+	bytePayLoad, ok := resp.Payload().([]byte)
+	if !ok {
+		return fiberErrors.NewHTTPError(errors.New("unable to parse payload"))
+	}
+	_, err = writer.Write(bytePayLoad)
 	return err
 }

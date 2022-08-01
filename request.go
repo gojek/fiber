@@ -1,7 +1,7 @@
 package fiber
 
 type Request interface {
-	Payload() []byte
+	Payload() interface{}
 	Header() map[string][]string
 	Clone() (Request, error)
 	OperationName() string

@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gojek/fiber"
 	fiberErrors "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 type eagerRouterTestCase struct {
@@ -260,7 +260,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 
 		assert.Equal(t, len(tt.expected), len(received), tt.name)
 		for i := 0; i < len(tt.expected); i++ {
-			assert.Equal(t, string(tt.expected[i].Payload()), string(received[i].Payload()), tt.name)
+			assert.Equal(t, string(tt.expected[i].Payload().([]byte)), string(received[i].Payload().([]byte)), tt.name)
 			assert.Equal(t, tt.expected[i].StatusCode(), received[i].StatusCode(), tt.name)
 		}
 		strategy.AssertExpectations(t)
