@@ -2,6 +2,7 @@ package fiber_grpc
 
 import (
 	"github.com/gojek/fiber"
+
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 )
@@ -9,6 +10,8 @@ import (
 type Request struct {
 	Metadata       metadata.MD
 	RequestPayload proto.Message
+	ResponseProto  proto.Message
+	ServiceMethod  string
 
 	hostport string
 }
@@ -22,13 +25,21 @@ func (r *Request) Header() map[string][]string {
 }
 
 func (r *Request) Clone() (fiber.Request, error) {
-	return r, nil
+	return &Request{
+		Metadata:       r.Metadata,
+		RequestPayload: r.RequestPayload,
+		ResponseProto:  r.ResponseProto,
+		ServiceMethod:  r.ServiceMethod,
+		hostport:       r.hostport,
+	}, nil
 }
 
+// OperationName is naming used in tracing interceptors
 func (r *Request) OperationName() string {
-	return "grpc"
+	return r.ServiceMethod
 }
 
+// Transform is use by backend component within a Proxy to abstract endpoint from dispatcher
 func (r *Request) Transform(backend fiber.Backend) (fiber.Request, error) {
 	r.hostport = backend.URL("")
 	return r, nil

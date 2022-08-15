@@ -2,19 +2,19 @@ package fiber_grpc
 
 import (
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/errors"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
 type Response struct {
 	Metadata        metadata.MD
 	ResponsePayload proto.Message
-	error           errors.HTTPError //TODO should rename this to generic error
+	status          *status.Status
 }
 
 func (r *Response) IsSuccess() bool {
-	return true
+	return r.StatusCode() == 0
 }
 
 func (r *Response) Payload() interface{} {
@@ -22,13 +22,14 @@ func (r *Response) Payload() interface{} {
 }
 
 func (r *Response) StatusCode() int {
-	return 0
+	return int(r.status.Code())
 }
 
 func (r *Response) BackendName() string {
-	return "grpc"
+	return r.Metadata.Get("backend")[0]
 }
 
-func (r *Response) WithBackendName(string) fiber.Response {
+func (r *Response) WithBackendName(backendName string) fiber.Response {
+	r.Metadata.Set("backend", backendName)
 	return r
 }
