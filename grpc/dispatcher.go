@@ -1,4 +1,4 @@
-package fiber_grpc
+package grpc
 
 import (
 	"context"

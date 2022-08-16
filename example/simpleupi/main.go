@@ -7,8 +7,8 @@ import (
 
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/extras"
-	"github.com/gojek/fiber/fiber_grpc"
 	upiv1 "github.com/gojek/fiber/gen/proto/go/upi/v1"
+	"github.com/gojek/fiber/grpc"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 func main() {
-	var req = &fiber_grpc.Request{
+	var req = &grpc.Request{
 		ServiceMethod: serviceMethod,
 		ResponseProto: &upiv1.PredictValuesResponse{},
 		RequestPayload: &upiv1.PredictValuesRequest{
@@ -37,7 +37,7 @@ func main() {
 	component := fiber.NewEagerRouter("eager-router")
 	component.SetStrategy(new(extras.RandomRoutingStrategy))
 
-	upiDispatcher := &fiber_grpc.Dispatcher{}
+	upiDispatcher := &grpc.Dispatcher{}
 	caller1, _ := fiber.NewCaller("", upiDispatcher)
 	caller2, _ := fiber.NewCaller("", upiDispatcher)
 
@@ -75,7 +75,7 @@ func main() {
 	}
 }
 
-func callProxy(proxy *fiber.Proxy, req *fiber_grpc.Request) *upiv1.PredictValuesResponse {
+func callProxy(proxy *fiber.Proxy, req *grpc.Request) *upiv1.PredictValuesResponse {
 	select {
 	case resp, ok := <-proxy.Dispatch(context.Background(), req).Iter():
 		if ok {
