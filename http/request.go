@@ -18,6 +18,10 @@ type Request struct {
 	*http.Request
 }
 
+func (r *Request) Protocol() fiber.Protocol {
+	return fiber.HTTP
+}
+
 func (r *Request) Header() map[string][]string {
 	return r.Request.Header
 }

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 type fanOutTestCase struct {
@@ -81,7 +81,7 @@ func TestFanOut_Dispatch(t *testing.T) {
 			name: "one route/one NOK response",
 			responses: map[string][]testutils.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{Response: testutils.MockResp(503, "", nil, errors.ErrServiceUnavailable)},
+					testutils.DelayedResponse{Response: testutils.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP.String()))},
 				},
 			},
 		},

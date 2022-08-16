@@ -43,7 +43,7 @@ func TestNewHTTPResponse(t *testing.T) {
 				status  int
 			}{status: http.StatusInternalServerError, payload: []byte(`{
   "code": 500,
-  "error": "fiber: empty response received"
+  "error": "fiber: request cannot be completed: empty response received"
 }`),
 			},
 		},
@@ -73,7 +73,7 @@ func TestNewHTTPResponse(t *testing.T) {
 				status  int
 			}{status: http.StatusInternalServerError, payload: []byte(`{
   "code": 500,
-  "error": "exception"
+  "error": "fiber: request cannot be completed: unable to read response body: exception"
 }`),
 			},
 		},

@@ -15,7 +15,7 @@ type FastestResponseFanIn struct {
 // Aggregate returns the first (fastest) response from the result channel
 func (r *FastestResponseFanIn) Aggregate(
 	_ context.Context,
-	_ fiber.Request,
+	req fiber.Request,
 	queue fiber.ResponseQueue,
 ) fiber.Response {
 	out := make(chan fiber.Response, 1)
@@ -28,7 +28,7 @@ func (r *FastestResponseFanIn) Aggregate(
 				return
 			}
 		}
-		out <- fiber.NewErrorResponse(errors.ErrServiceUnavailable)
+		out <- fiber.NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol().String()))
 	}()
 	return <-out
 }

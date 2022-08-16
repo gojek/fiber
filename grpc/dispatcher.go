@@ -51,8 +51,8 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 			return &Response{status: responseStatus}
 		}
 
-		//TODO refactor errors.HTTPError into a generic error
-		err = &fiberError.HTTPError{
+		//TODO refactor errors.FiberError into a generic error
+		err = &fiberError.FiberError{
 			Code:    int(responseStatus.Code()),
 			Message: responseStatus.Message(),
 		}

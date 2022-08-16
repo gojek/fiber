@@ -7,15 +7,19 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
 	"github.com/gojek/fiber/internal/testutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type unsupportedRequest struct {
 	*fiber.CachedPayload
+}
+
+func (r *unsupportedRequest) Protocol() fiber.Protocol {
+	return fiber.HTTP
 }
 
 func (r *unsupportedRequest) Clone() (fiber.Request, error) {

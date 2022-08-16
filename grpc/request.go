@@ -16,6 +16,10 @@ type Request struct {
 	hostport string
 }
 
+func (r *Request) Protocol() fiber.Protocol {
+	return fiber.GRPC
+}
+
 func (r *Request) Payload() interface{} {
 	return r.RequestPayload
 }

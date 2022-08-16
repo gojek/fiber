@@ -46,7 +46,7 @@ func (h *Handler) ServeHTTP(writer http.ResponseWriter, httpReq *http.Request) {
 }
 
 // DoRequest executes the given http request and returns the response / error
-func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors.HTTPError) {
+func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors.FiberError) {
 	if req, err := NewHTTPRequest(httpReq); err == nil {
 		ctx, cancel := context.WithTimeout(req.Context(), h.options.Timeout)
 		defer cancel()
@@ -56,12 +56,12 @@ func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors
 			if ok {
 				return resp, nil
 			}
-			return nil, fiberErrors.ErrServiceUnavailable
+			return nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP.String())
 		case <-time.After(h.options.Timeout):
-			return nil, fiberErrors.ErrRequestTimeout
+			return nil, fiberErrors.ErrRequestTimeout(fiber.HTTP.String())
 		}
 	} else {
-		return nil, fiberErrors.ErrReadRequestFailed(err)
+		return nil, fiberErrors.ErrReadRequestFailed(fiber.HTTP.String(), err)
 	}
 }
 
@@ -78,7 +78,7 @@ func (h *Handler) write(resp fiber.Response, writer http.ResponseWriter) (err er
 	writer.WriteHeader(resp.StatusCode())
 	bytePayLoad, ok := resp.Payload().([]byte)
 	if !ok {
-		return fiberErrors.NewHTTPError(errors.New("unable to parse payload"))
+		return fiberErrors.NewFiberError(fiber.HTTP.String(), errors.New("unable to parse payload"))
 	}
 	_, err = writer.Write(bytePayLoad)
 	return err
