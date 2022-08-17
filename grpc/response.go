@@ -1,6 +1,8 @@
 package grpc
 
 import (
+	"strings"
+
 	"github.com/gojek/fiber"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -10,7 +12,7 @@ import (
 type Response struct {
 	Metadata        metadata.MD
 	ResponsePayload proto.Message
-	status          *status.Status
+	Status          *status.Status
 }
 
 func (r *Response) IsSuccess() bool {
@@ -22,11 +24,11 @@ func (r *Response) Payload() interface{} {
 }
 
 func (r *Response) StatusCode() int {
-	return int(r.status.Code())
+	return int(r.Status.Code())
 }
 
 func (r *Response) BackendName() string {
-	return r.Metadata.Get("backend")[0]
+	return strings.Join(r.Metadata.Get("backend"), ",")
 }
 
 func (r *Response) WithBackendName(backendName string) fiber.Response {

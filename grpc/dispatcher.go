@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/gojek/fiber"
@@ -15,29 +14,44 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Dispatcher struct {
-}
+type Dispatcher struct{}
 
 func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 
 	grpcRequest, ok := request.(*Request)
 	if !ok {
-		return fiber.NewErrorResponse(errors.New("fiber: grpc.Dispatcher supports only grpc.Request type of requests"))
+		return fiber.NewErrorResponse(
+			fiberError.FiberError{
+				Code:    int(codes.InvalidArgument),
+				Message: "fiber: grpc.Dispatcher supports only grpc.Request type of requests",
+			})
+	}
+
+	if grpcRequest.hostport == "" || grpcRequest.ServiceMethod == "" {
+		return fiber.NewErrorResponse(
+			fiberError.FiberError{
+				Code:    int(codes.InvalidArgument),
+				Message: "missing hostport/servicemethod",
+			})
 	}
 
 	conn, err := grpc.Dial(grpcRequest.hostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		// if ok is false, error is wrap inside status with unknown code
+		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)
-		return &Response{status: responseStatus}
+		return &Response{Status: responseStatus}
 	}
 
 	payload, ok := request.Payload().(proto.Message)
 	if !ok {
-		return fiber.NewErrorResponse(errors.New("unable to convert payload to proto message"))
+		return fiber.NewErrorResponse(
+			fiberError.FiberError{
+				Code:    int(codes.InvalidArgument),
+				Message: "unable to convert payload to proto message",
+			})
 	}
 
-	//TODO add timeout
+	//TODO add timeout to appropriate config
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	ctx = metadata.NewOutgoingContext(ctx, grpcRequest.Metadata)
@@ -46,22 +60,18 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 	var responseHeader metadata.MD
 	err = conn.Invoke(ctx, grpcRequest.ServiceMethod, payload, responseProto, grpc.Header(&responseHeader))
 	if err != nil {
-		responseStatus, ok := status.FromError(err)
-		if !ok {
-			return &Response{status: responseStatus}
-		}
-
-		//TODO refactor errors.FiberError into a generic error
-		err = &fiberError.FiberError{
-			Code:    int(responseStatus.Code()),
-			Message: responseStatus.Message(),
-		}
-		return fiber.NewErrorResponse(err)
+		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
+		responseStatus, _ := status.FromError(err)
+		return fiber.NewErrorResponse(
+			fiberError.FiberError{
+				Code:    int(responseStatus.Code()),
+				Message: responseStatus.Message(),
+			})
 	}
 
 	return &Response{
 		Metadata:        responseHeader,
 		ResponsePayload: responseProto,
-		status:          status.New(codes.OK, "Success"),
+		Status:          status.New(codes.OK, "Success"),
 	}
 }
