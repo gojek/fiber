@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gojek/fiber"
 	upiv1 "github.com/gojek/fiber/gen/proto/go/upi/v1"
+	"github.com/gojek/fiber/internal/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 	"testing"
@@ -116,19 +116,10 @@ func TestRequest_Protocol(t *testing.T) {
 	assert.Equal(t, fiber.GRPC, req.Protocol())
 }
 
-type mockBackend struct {
-	mock.Mock
-}
-
-func (b *mockBackend) URL(requestURI string) string {
-	args := b.Called(requestURI)
-	return args.String(0)
-}
-
 func TestRequest_Transform(t *testing.T) {
 
 	hostport := "1000"
-	mockBackend := new(mockBackend)
+	mockBackend := new(mocks.Backend)
 	mockBackend.On("URL", "").Return(hostport)
 	tests := []struct {
 		name        string
