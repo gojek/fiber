@@ -39,7 +39,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)
-		return &Response{Status: responseStatus}
+		return &Response{Status: *responseStatus}
 	}
 
 	payload, ok := request.Payload().(proto.Message)
@@ -72,6 +72,6 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 	return &Response{
 		Metadata:        responseHeader,
 		ResponsePayload: responseProto,
-		Status:          status.New(codes.OK, "Success"),
+		Status:          *status.New(codes.OK, "Success"),
 	}
 }

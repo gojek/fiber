@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"errors"
 	"github.com/gojek/fiber"
 
 	"google.golang.org/grpc/metadata"
@@ -45,6 +46,9 @@ func (r *Request) OperationName() string {
 
 // Transform is use by backend component within a Proxy to abstract endpoint from dispatcher
 func (r *Request) Transform(backend fiber.Backend) (fiber.Request, error) {
+	if backend == nil {
+		return nil, errors.New("backend cannot be nil")
+	}
 	r.hostport = backend.URL("")
 	return r, nil
 }

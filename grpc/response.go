@@ -12,7 +12,7 @@ import (
 type Response struct {
 	Metadata        metadata.MD
 	ResponsePayload proto.Message
-	Status          *status.Status
+	Status          status.Status
 }
 
 func (r *Response) IsSuccess() bool {
