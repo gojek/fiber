@@ -1,18 +1,19 @@
 package grpc
 
 import (
+	"strconv"
+	"testing"
+
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/errors"
 	upiv1 "github.com/gojek/fiber/gen/proto/go/upi/v1"
 	"github.com/gojek/fiber/http"
 	testutils "github.com/gojek/fiber/internal/testutils/grpc"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"strconv"
-	"testing"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -129,7 +130,7 @@ func TestDispatcher_Do(t *testing.T) {
 				if !ok {
 					assert.FailNow(t, "Fail to type assert response")
 				}
-				assert.EqualValues(t, expectedPayload.String(), actualPayload.String())
+				assert.True(t, proto.Equal(expectedPayload, actualPayload), "actual payload doesn't equate expected")
 			}
 		})
 	}
