@@ -14,7 +14,13 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Dispatcher struct{}
+const (
+	TimeoutDefault = time.Second
+)
+
+type Dispatcher struct {
+	Timeout time.Duration
+}
 
 func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 
@@ -51,8 +57,11 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 			})
 	}
 
-	//TODO add timeout to appropriate config
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Set default timeout
+	if d.Timeout == 0 {
+		d.Timeout = TimeoutDefault
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
 	defer cancel()
 	ctx = metadata.NewOutgoingContext(ctx, grpcRequest.Metadata)
 
@@ -65,7 +74,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 		return fiber.NewErrorResponse(
 			fiberError.FiberError{
 				Code:    int(responseStatus.Code()),
-				Message: responseStatus.Message(),
+				Message: responseStatus.String(),
 			})
 	}
 

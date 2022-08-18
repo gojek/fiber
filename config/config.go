@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gojek/fiber/grpc"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -14,9 +15,9 @@ import (
 	"github.com/gojek/fiber/types"
 )
 
-// DefaultHTTPClientTimeout defines the default http client timeout to use,
+// DefaultClientTimeout defines the default http client timeout to use,
 // if it is not supplied in the config
-const DefaultHTTPClientTimeout = time.Second
+const DefaultClientTimeout = time.Second
 
 // Config is the base interface to initialise a network from a config file
 type Config interface {
@@ -168,19 +169,28 @@ type ProxyConfig struct {
 	ComponentConfig
 	Endpoint string   `json:"endpoint" required:"true"`
 	Timeout  Duration `json:"timeout"`
+	Protocol string   `json:"protocol"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {
-	backend := fiber.NewBackend(c.ID, c.Endpoint)
-	httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}
 
-	if dispatcher, err := fiberHTTP.NewDispatcher(httpClient); err != nil {
-		return nil, err
-	} else if caller, err := fiber.NewCaller(c.ID, dispatcher); err != nil {
-		return nil, err
+	var dispatcher fiber.Dispatcher
+	var err error
+	if strings.EqualFold(c.Protocol, fiber.GRPC.String()) {
+		dispatcher = &grpc.Dispatcher{Timeout: time.Duration(c.Timeout)}
 	} else {
-		return fiber.NewProxy(backend, caller), nil
+		httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}
+		dispatcher, err = fiberHTTP.NewDispatcher(httpClient)
 	}
+	if err != nil {
+		return nil, err
+	}
+	caller, err := fiber.NewCaller(c.ID, dispatcher)
+	if err != nil {
+		return nil, err
+	}
+	backend := fiber.NewBackend(c.ID, c.Endpoint)
+	return fiber.NewProxy(backend, caller), nil
 }
 
 // FromConfig takes in the path to a config file, parses the contents
@@ -211,7 +221,7 @@ func parseConfig(data []byte) (Config, error) {
 		dst = &ProxyConfig{
 			// Set the default value here, can't find an easier way to supply defaults
 			// Ref: https://github.com/go-yaml/yaml/issues/165
-			Timeout: Duration(DefaultHTTPClientTimeout),
+			Timeout: Duration(DefaultClientTimeout),
 		}
 	case "EAGER_ROUTER", "LAZY_ROUTER":
 		dst = &RouterConfig{

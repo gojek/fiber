@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: upi/v1/upi.proto
+// source: testdata/proto/upi.proto
 
-package upiv1
+package proto
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewUniversalPredictionServiceClient(cc grpc.ClientConnInterface) UniversalP
 
 func (c *universalPredictionServiceClient) PredictValues(ctx context.Context, in *PredictValuesRequest, opts ...grpc.CallOption) (*PredictValuesResponse, error) {
 	out := new(PredictValuesResponse)
-	err := c.cc.Invoke(ctx, "/upi.v1.UniversalPredictionService/PredictValues", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/testproto.UniversalPredictionService/PredictValues", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func _UniversalPredictionService_PredictValues_Handler(srv interface{}, ctx cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/upi.v1.UniversalPredictionService/PredictValues",
+		FullMethod: "/testproto.UniversalPredictionService/PredictValues",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UniversalPredictionServiceServer).PredictValues(ctx, req.(*PredictValuesRequest))
@@ -90,7 +90,7 @@ func _UniversalPredictionService_PredictValues_Handler(srv interface{}, ctx cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UniversalPredictionService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "upi.v1.UniversalPredictionService",
+	ServiceName: "testproto.UniversalPredictionService",
 	HandlerType: (*UniversalPredictionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -99,5 +99,5 @@ var UniversalPredictionService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "upi/v1/upi.proto",
+	Metadata: "testdata/proto/upi.proto",
 }

@@ -3,8 +3,8 @@ package grpc
 import (
 	"fmt"
 	"github.com/gojek/fiber"
-	upiv1 "github.com/gojek/fiber/gen/proto/go/upi/v1"
 	"github.com/gojek/fiber/internal/mocks"
+	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
@@ -98,9 +98,9 @@ func TestRequest_Payload(t *testing.T) {
 		{
 			name: "ok payload",
 			req: Request{
-				RequestPayload: &upiv1.PredictValuesResponse{},
+				RequestPayload: &testproto.PredictValuesResponse{},
 			},
-			want: &upiv1.PredictValuesResponse{},
+			want: &testproto.PredictValuesResponse{},
 		},
 	}
 	for _, tt := range tests {

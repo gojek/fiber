@@ -1,14 +1,15 @@
 package grpc
 
 import (
-	upiv1 "github.com/gojek/fiber/gen/proto/go/upi/v1"
+	"log"
+	"testing"
+
+	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"log"
-	"testing"
 )
 
 func TestResponse_Backend(t *testing.T) {
@@ -71,8 +72,8 @@ func TestResponse_Status(t *testing.T) {
 }
 
 func TestResponse_Payload(t *testing.T) {
-	response := &upiv1.PredictValuesRequest{
-		PredictionRows: []*upiv1.PredictionRow{
+	response := &testproto.PredictValuesRequest{
+		PredictionRows: []*testproto.PredictionRow{
 			{
 				RowId: "123",
 			},

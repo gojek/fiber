@@ -3,20 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	testutils "github.com/gojek/fiber/internal/testutils/grpc"
-	"log"
-
-	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/extras"
+	"github.com/gojek/fiber/config"
 	"github.com/gojek/fiber/grpc"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
+	testutils "github.com/gojek/fiber/internal/testutils/grpc"
+	"log"
 )
 
 const (
 	port1         = 50555
 	port2         = 50556
-	endpoint1     = "localhost:50555"
-	endpoint2     = "localhost:50556"
 	serviceMethod = "testproto.UniversalPredictionService/PredictValues"
 )
 
@@ -25,25 +21,11 @@ func main() {
 	testutils.RunTestUPIServer(port1)
 	testutils.RunTestUPIServer(port2)
 
-	// initialize root-level component
-	component := fiber.NewEagerRouter("eager-router")
-	component.SetStrategy(new(extras.RandomRoutingStrategy))
-
-	upiDispatcher := &grpc.Dispatcher{}
-	caller1, _ := fiber.NewCaller("", upiDispatcher)
-	caller2, _ := fiber.NewCaller("", upiDispatcher)
-
-	proxy1 := fiber.NewProxy(
-		fiber.NewBackend("route-a", endpoint1),
-		caller1)
-	proxy2 := fiber.NewProxy(
-		fiber.NewBackend("route-b", endpoint2),
-		caller2)
-
-	component.SetRoutes(map[string]fiber.Component{
-		"route-a": proxy1,
-		"route-b": proxy2,
-	})
+	// initialize root-level fiber component from the config
+	component, err := config.FromConfig("./example/simpleupifromconfig/fiber.yaml")
+	if err != nil {
+		log.Fatalf("\nerror: %v\n", err)
+	}
 
 	var req = &grpc.Request{
 		ServiceMethod: serviceMethod,

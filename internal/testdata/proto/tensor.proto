@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package upi.v1;
+package testproto;
 
 message Tensor {
   enum DataType {

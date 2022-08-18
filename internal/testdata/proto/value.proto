@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package upi.v1;
+package testproto;
 
-import "upi/v1/tensor.proto";
+import "testdata/proto/tensor.proto";
 
 /* Represents a named and typed data point.
  * Can be used as a prediction input, output or metdadata.

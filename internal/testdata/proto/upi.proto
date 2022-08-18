@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package upi.v1;
+package testproto;
 
-import "upi/v1/value.proto";
+import "testdata/proto/value.proto";
 import "google/protobuf/timestamp.proto";
 
 message PredictValuesRequest {

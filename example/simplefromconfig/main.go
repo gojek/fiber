@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// initialize root-level fiber component from the config
-	component, err := config.FromConfig("./example/simple/component.yaml")
+	component, err := config.FromConfig("./example/simplefromconfig/fiber.yaml")
 	if err != nil {
 		log.Fatalf("\nerror: %v\n", err)
 	}
