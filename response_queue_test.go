@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/testutils/http"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +31,8 @@ func makeChan(r ...fiber.Response) chan fiber.Response {
 }
 func TestNewResponseQueue(t *testing.T) {
 	responses := []fiber.Response{
-		http.MockResp(200, "foo", nil, nil),
-		http.MockResp(200, "bar", nil, nil),
+		testUtilsHttp.MockResp(200, "foo", nil, nil),
+		testUtilsHttp.MockResp(200, "bar", nil, nil),
 	}
 
 	q := fiber.NewResponseQueue(makeChan(responses...), 0)
@@ -43,8 +43,8 @@ func TestNewResponseQueue(t *testing.T) {
 
 func TestNewResponseQueueFromResponses(t *testing.T) {
 	responses := []fiber.Response{
-		http.MockResp(200, "foo", nil, nil),
-		http.MockResp(200, "bar", nil, nil),
+		testUtilsHttp.MockResp(200, "foo", nil, nil),
+		testUtilsHttp.MockResp(200, "bar", nil, nil),
 	}
 
 	q := fiber.NewResponseQueueFromResponses(responses...)
@@ -58,10 +58,10 @@ func TestNewResponseQueueFromResponses(t *testing.T) {
 
 func TestResponseQueue_Iter(t *testing.T) {
 	responses := []fiber.Response{
-		http.MockResp(200, "fist", nil, nil),
-		http.MockResp(200, "second", nil, nil),
-		http.MockResp(200, "third", nil, nil),
-		http.MockResp(200, "fourth", nil, nil),
+		testUtilsHttp.MockResp(200, "fist", nil, nil),
+		testUtilsHttp.MockResp(200, "second", nil, nil),
+		testUtilsHttp.MockResp(200, "third", nil, nil),
+		testUtilsHttp.MockResp(200, "fourth", nil, nil),
 	}
 
 	out := make(chan fiber.Response)

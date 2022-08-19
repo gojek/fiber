@@ -3,17 +3,17 @@ package fiber_test
 import (
 	"context"
 	"fmt"
-	"github.com/gojek/fiber/internal/testutils/http"
 	"net/url"
 	"testing"
 
 	"github.com/gojek/fiber"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestProxyCaller_Dispatch(t *testing.T) {
 	host, path := "http://localhost:8080", "/recommendations/search"
-	req := http.MockReq("POST", fmt.Sprintf("%s%s", host, path), "")
+	req := testUtilsHttp.MockReq("POST", fmt.Sprintf("%s%s", host, path), "")
 
 	dispatcher := new(MockDispatcher)
 	dispatcher.On("Do", req).Return(nil)

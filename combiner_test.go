@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/testutils/http"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/gojek/fiber/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -60,8 +60,8 @@ func TestCombiner_Dispatch(t *testing.T) {
 	suite := []combinerTestCase{
 		{
 			name:     "two routes/two OK responseQueue",
-			request:  http.MockReq("POST", "http:/combiner:8080", ""),
-			expected: http.MockResp(200, "A-OK,B-OK", nil, nil),
+			request:  testUtilsHttp.MockReq("POST", "http:/combiner:8080", ""),
+			expected: testUtilsHttp.MockResp(200, "A-OK,B-OK", nil, nil),
 		},
 	}
 
