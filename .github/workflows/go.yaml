@@ -22,6 +22,7 @@ jobs:
 
     - name: Lint code
       uses: golangci/golangci-lint-action@v2
+      continue-on-error: true
       with:
         version: ${{ env.GO_LINT_VERSION }}
         skip-go-installation: true
