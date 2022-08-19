@@ -25,5 +25,4 @@ jobs:
       continue-on-error: true
       with:
         version: ${{ env.GO_LINT_VERSION }}
-        skip-go-installation: true
         args: --timeout 3m --verbose
