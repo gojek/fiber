@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"errors"
-	"github.com/gojek/fiber"
 
+	"github.com/gojek/fiber"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 )

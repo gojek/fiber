@@ -40,7 +40,7 @@ var (
 	ErrRouterStrategyTimeoutExceeded = func(protocol string) *FiberError {
 		statusCode := http.StatusInternalServerError
 		if protocol == "GRPC" {
-			statusCode = int(codes.Unimplemented)
+			statusCode = int(codes.Internal)
 		}
 		return &FiberError{
 			Code:    statusCode,

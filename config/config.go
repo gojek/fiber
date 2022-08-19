@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gojek/fiber/grpc"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/gojek/fiber"
+	"github.com/gojek/fiber/grpc"
 	fiberHTTP "github.com/gojek/fiber/http"
 	"github.com/gojek/fiber/types"
 )

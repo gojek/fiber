@@ -42,20 +42,18 @@ func main() {
 		},
 	}
 
-	select {
-	case resp, ok := <-component.Dispatch(context.Background(), req).Iter():
-		if ok {
-			if resp.StatusCode() == 0 {
-				payload, ok := resp.Payload().(*testproto.PredictValuesResponse)
-				if !ok {
-					log.Fatalf("fail to convert response to proto")
-				}
-				log.Print(payload.String())
-			} else {
-				log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
+	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
+	if ok {
+		if resp.StatusCode() == 0 {
+			payload, ok := resp.Payload().(*testproto.PredictValuesResponse)
+			if !ok {
+				log.Fatalf("fail to convert response to proto")
 			}
+			log.Print(payload.String())
 		} else {
-			log.Fatalf("fail to receive response queue")
+			log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
 		}
+	} else {
+		log.Fatalf("fail to receive response queue")
 	}
 }

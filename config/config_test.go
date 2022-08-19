@@ -2,14 +2,14 @@ package config_test
 
 import (
 	"encoding/json"
-	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/grpc"
-	fiberhttp "github.com/gojek/fiber/http"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/config"
+	"github.com/gojek/fiber/grpc"
+	fiberhttp "github.com/gojek/fiber/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,7 +80,6 @@ func TestFromConfig(t *testing.T) {
 		name       string
 		configPath string
 		want       fiber.Component
-		wantErr    assert.ErrorAssertionFunc
 	}{
 		{
 			name:       "http proxy",
