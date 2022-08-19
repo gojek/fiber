@@ -2,13 +2,14 @@ package grpc
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/internal/mocks"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
-	"testing"
 )
 
 func TestRequest_Clone(t *testing.T) {

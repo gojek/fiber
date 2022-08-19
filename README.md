@@ -125,8 +125,9 @@ in more complicated execution graphs. There are few standard fiber components im
 - `PROXY` – component, that dispatches incoming request against configured proxy backend url.                   
 Configuration:               
     - `id` – component ID. Example `my_proxy`
-    - `endpoint` - proxy endpoint url. Example `http://your-proxy:8080/nested/path`
+    - `endpoint` - proxy endpoint url. Example for http `http://your-proxy:8080/nested/path` or  grpc `127.0.0.1:50050`
     - `timeout` - request timeout for dispatching a request. Example `100ms` 
+    - `protocol` - communication protocol. Only "grpc" or "http" supported.
     
 - `FAN_OUT` - component, that dispatches incoming request by sending it to each of its registered 
 `routes`. Response queue will contain responses of each route in order they have arrived.  
