@@ -141,7 +141,7 @@ func TestRequest_Transform(t *testing.T) {
 			req:     Request{},
 			backend: mockBackend,
 			expected: Request{
-				hostport: hostport,
+				endpoint: hostport,
 			},
 			expectedErr: "",
 		},

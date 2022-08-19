@@ -29,7 +29,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: Lint code
         uses: golangci/golangci-lint-action@v3
-        continue-on-error: true
         with:
           version: ${{ env.GO_LINT_VERSION }}
           args: --timeout 3m --verbose

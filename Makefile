@@ -8,7 +8,7 @@ tidy:
 
 setup:
 	@echo "Getting CI dependencies..."
-	@test -x ${GOPATH}/bin/golangci-lint || go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.27.0
+	@test -x ${GOPATH}/bin/golangci-lint || go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48.0
 
 lint: setup
 	@echo "Linting code..."

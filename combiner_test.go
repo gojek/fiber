@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gojek/fiber"
+	"github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/testutils"
-	"github.com/gojek/fiber/util"
 )
 
 type mockFanOut struct {
@@ -60,8 +60,8 @@ func TestCombiner_Dispatch(t *testing.T) {
 	suite := []combinerTestCase{
 		{
 			name:     "two routes/two OK responseQueue",
-			request:  testutils.MockReq("POST", "http:/combiner:8080", ""),
-			expected: testutils.MockResp(200, "A-OK,B-OK", nil, nil),
+			request:  http.MockReq("POST", "http:/combiner:8080", ""),
+			expected: http.MockResp(200, "A-OK,B-OK", nil, nil),
 		},
 	}
 

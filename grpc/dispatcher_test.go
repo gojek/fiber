@@ -38,30 +38,30 @@ func TestDispatcher_Do(t *testing.T) {
 			}),
 		},
 		{
-			name: "missing hostport",
+			name: "missing endpoint",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "missing hostport/servicemethod",
+				Message: "missing endpoint/servicemethod",
 			}),
 		},
 		{
 			name: "missing service method",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				hostport:       fmt.Sprintf(":%d", port),
+				endpoint:       fmt.Sprintf(":%d", port),
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "missing hostport/servicemethod",
+				Message: "missing endpoint/servicemethod",
 			}),
 		},
 		{
 			name: "empty input",
 			input: &Request{
-				hostport:      fmt.Sprintf(":%d", port),
+				endpoint:      fmt.Sprintf(":%d", port),
 				ServiceMethod: serviceMethod,
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
@@ -73,7 +73,7 @@ func TestDispatcher_Do(t *testing.T) {
 			name: "invalid server address",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				hostport:       "localhost:50050",
+				endpoint:       "localhost:50050",
 				ServiceMethod:  serviceMethod,
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
@@ -87,7 +87,7 @@ func TestDispatcher_Do(t *testing.T) {
 			name: "success",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				hostport:       fmt.Sprintf(":%d", port),
+				endpoint:       fmt.Sprintf(":%d", port),
 				ServiceMethod:  serviceMethod,
 				ResponseProto:  &testproto.PredictValuesResponse{},
 			},

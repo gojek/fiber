@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	testutils "github.com/gojek/fiber/internal/testutils/grpc"
+	"google.golang.org/grpc/codes"
 	"log"
 
 	"github.com/gojek/fiber"
@@ -62,7 +63,7 @@ func main() {
 
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
-		if resp.StatusCode() == 0 {
+		if resp.StatusCode() == int(codes.OK) {
 			payload, ok := resp.Payload().(*testproto.PredictValuesResponse)
 			if !ok {
 				log.Fatalf("fail to convert response to proto")

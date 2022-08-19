@@ -9,12 +9,13 @@ import (
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
+	"github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 )
 
 type fanOutTestCase struct {
 	name      string
-	responses map[string][]testutils.DelayedResponse
+	responses map[string][]http.DelayedResponse
 }
 
 func (tt *fanOutTestCase) Routes() map[string]fiber.Component {
@@ -46,76 +47,76 @@ func TestFanOut_Dispatch(t *testing.T) {
 	suite := []fanOutTestCase{
 		{
 			name: "two routes/two OK responseQueue",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "A-OK", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "A-OK", nil, nil)},
 				},
 				"route-b": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "B-OK", nil, nil)},
 				},
 			},
 		},
 		{
 			name: "two routes/one OK response",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "A-OK", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "A-OK", nil, nil)},
 				},
 				"route-b": {},
 			},
 		},
 		{
 			name: "two routes/two OK responseQueue in each",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "A-OK_1", nil, nil)},
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "A-OK_2", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "A-OK_1", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "A-OK_2", nil, nil)},
 				},
 				"route-b": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK_1", nil, nil)},
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK_2", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "B-OK_1", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "B-OK_2", nil, nil)},
 				},
 			},
 		},
 		{
 			name: "one route/one NOK response",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{Response: testutils.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP.String()))},
+					http.DelayedResponse{Response: http.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP.String()))},
 				},
 			},
 		},
 		{
 			name: "one route/multiple responseQueue with delays",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{
+					http.DelayedResponse{
 						Latency:  10 * time.Millisecond,
-						Response: testutils.MockResp(200, "OK", nil, nil),
+						Response: http.MockResp(200, "OK", nil, nil),
 					},
-					testutils.DelayedResponse{
+					http.DelayedResponse{
 						Latency:  timeout / 2,
-						Response: testutils.MockResp(200, "OK", nil, nil),
+						Response: http.MockResp(200, "OK", nil, nil),
 					},
 					// should never be received
-					testutils.DelayedResponse{
+					http.DelayedResponse{
 						Latency:  2 * timeout,
-						Response: testutils.MockResp(200, "OK", nil, nil),
+						Response: http.MockResp(200, "OK", nil, nil),
 					},
 				},
 			},
 		},
 		{
 			name: "two routes/one OK, one timeout",
-			responses: map[string][]testutils.DelayedResponse{
+			responses: map[string][]http.DelayedResponse{
 				"route-a": {
-					testutils.DelayedResponse{
+					http.DelayedResponse{
 						Latency:  2 * timeout,
-						Response: testutils.MockResp(200, "OK", nil, nil),
+						Response: http.MockResp(200, "OK", nil, nil),
 					},
 				},
 				"route-b": {
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "OK", nil, nil)},
+					http.DelayedResponse{Response: http.MockResp(200, "OK", nil, nil)},
 				},
 			},
 		},
@@ -131,7 +132,7 @@ func TestFanOut_Dispatch(t *testing.T) {
 			expectedResponses = tt.ExpectedResponses(timeout)
 		)
 
-		for responsesCh := fanOut.Dispatch(ctx, testutils.MockReq("GET", "http://test:8080", "")).Iter(); ; {
+		for responsesCh := fanOut.Dispatch(ctx, http.MockReq("GET", "http://test:8080", "")).Iter(); ; {
 			select {
 			case resp, ok := <-responsesCh:
 				if ok {

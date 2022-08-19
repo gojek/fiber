@@ -3,13 +3,13 @@ package http_test
 import (
 	"bytes"
 	"errors"
+	http2 "github.com/gojek/fiber/internal/testutils/http"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
-	"github.com/gojek/fiber/internal/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -81,16 +81,16 @@ func TestDispatcher_Do(t *testing.T) {
 	suite := []dispatcherTestCase{
 		{
 			name:    "valid response",
-			request: testutils.MockReq("POST", "localhost:8080/dispatcher", ""),
+			request: http2.MockReq("POST", "localhost:8080/dispatcher", ""),
 			response: &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(bytes.NewReader([]byte("OK response"))),
 			},
-			expected: testutils.MockResp(200, "OK response", nil, nil),
+			expected: http2.MockResp(200, "OK response", nil, nil),
 		},
 		{
 			name:     "invalid response",
-			request:  testutils.MockReq("POST", "localhost:8080/dispatcher", ""),
+			request:  http2.MockReq("POST", "localhost:8080/dispatcher", ""),
 			error:    errors.New("http: nil Request.URL"),
 			expected: fiber.NewErrorResponse(errors.New("http: nil Request.URL")),
 		},

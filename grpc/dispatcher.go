@@ -33,15 +33,15 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 			})
 	}
 
-	if grpcRequest.hostport == "" || grpcRequest.ServiceMethod == "" {
+	if grpcRequest.endpoint == "" || grpcRequest.ServiceMethod == "" {
 		return fiber.NewErrorResponse(
 			fiberError.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "missing hostport/servicemethod",
+				Message: "missing endpoint/servicemethod",
 			})
 	}
 
-	conn, err := grpc.Dial(grpcRequest.hostport, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(grpcRequest.endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)

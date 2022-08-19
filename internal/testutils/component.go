@@ -2,20 +2,21 @@ package testutils
 
 import (
 	"context"
+	"github.com/gojek/fiber/internal/testutils/http"
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/gojek/fiber"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockComponent struct {
 	*fiber.BaseComponent
 	mock.Mock
 
-	responses []DelayedResponse
+	responses []http.DelayedResponse
 }
 
-func NewMockComponent(id string, responses ...DelayedResponse) *MockComponent {
+func NewMockComponent(id string, responses ...http.DelayedResponse) *MockComponent {
 	return &MockComponent{
 		BaseComponent: fiber.NewBaseComponent(id, ""),
 		responses:     responses,

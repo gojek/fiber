@@ -9,12 +9,17 @@ import (
 )
 
 type Request struct {
-	Metadata       metadata.MD
+	// Metadata will hold the grpc headers for request
+	Metadata metadata.MD
+	// RequestPayload is the grpc request
 	RequestPayload proto.Message
-	ResponseProto  proto.Message
-	ServiceMethod  string
+	// RequestPayload is the grpc expected response type
+	ResponseProto proto.Message
+	// ServiceMethod is the service and method of server point in the format "{grpc_service_name}/{method_name}"
+	ServiceMethod string
 
-	hostport string
+	// Endpoint is the host+port of the grpc server, eg "127.0.0.1:50050"
+	endpoint string
 }
 
 func (r *Request) Protocol() fiber.Protocol {
@@ -35,7 +40,7 @@ func (r *Request) Clone() (fiber.Request, error) {
 		RequestPayload: r.RequestPayload,
 		ResponseProto:  r.ResponseProto,
 		ServiceMethod:  r.ServiceMethod,
-		hostport:       r.hostport,
+		endpoint:       r.endpoint,
 	}, nil
 }
 
@@ -49,6 +54,6 @@ func (r *Request) Transform(backend fiber.Backend) (fiber.Request, error) {
 	if backend == nil {
 		return nil, errors.New("backend cannot be nil")
 	}
-	r.hostport = backend.URL("")
+	r.endpoint = backend.URL("")
 	return r, nil
 }
