@@ -167,9 +167,10 @@ func (c *CombinerConfig) initComponent() (fiber.Component, error) {
 // ProxyConfig is used to parse the configuration for a Proxy
 type ProxyConfig struct {
 	ComponentConfig
-	Endpoint string   `json:"endpoint" required:"true"`
-	Timeout  Duration `json:"timeout"`
-	Protocol string   `json:"protocol"`
+	Endpoint      string   `json:"endpoint" required:"true"`
+	Timeout       Duration `json:"timeout"`
+	Protocol      string   `json:"protocol"`
+	ServiceMethod string   `json:"serviceMethod"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {
@@ -177,7 +178,14 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	var dispatcher fiber.Dispatcher
 	var err error
 	if strings.EqualFold(c.Protocol, fiber.GRPC.String()) {
-		dispatcher = &grpc.Dispatcher{Timeout: time.Duration(c.Timeout)}
+		//TODO response proto cant be parse from yaml simply, to use server reflection and fetch proto dynamically
+		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
+			ServiceMethod: c.ServiceMethod,
+			Endpoint:      c.Endpoint,
+			//DialOption:    nil,
+			Timeout: time.Duration(c.Timeout),
+			//ResponseProto: nil,
+		})
 	} else {
 		httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}
 		dispatcher, err = fiberHTTP.NewDispatcher(httpClient)

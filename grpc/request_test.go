@@ -1,11 +1,9 @@
 package grpc
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/mocks"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
@@ -18,19 +16,21 @@ func TestRequest_Clone(t *testing.T) {
 		req  *Request
 	}{
 		{
-			name: "",
+			name: "empty",
 			req:  &Request{},
+		},
+		{
+			name: "simple",
+			req: &Request{
+				Metadata:       metadata.New(map[string]string{"test": "1"}),
+				RequestPayload: &testproto.PredictValuesRequest{},
+				ResponseProto:  nil,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			clone, err := tt.req.Clone()
-			fmt.Printf("%p\n", tt.req)
-			fmt.Printf("%p\n", clone)
-
-			fmt.Printf("%p\n", tt.req.Metadata)
-			fmt.Printf("%p\n", clone.(*Request).Metadata)
-
 			assert.NoError(t, err)
 			assert.Equal(t, tt.req, clone)
 		})
@@ -72,14 +72,7 @@ func TestRequest_OperationName(t *testing.T) {
 		{
 			name:     "empty request",
 			req:      Request{},
-			expected: "",
-		},
-		{
-			name: "ok ServiceMethod",
-			req: Request{
-				ServiceMethod: "service/InvokeMethod",
-			},
-			expected: "service/InvokeMethod",
+			expected: "grpc",
 		},
 	}
 	for _, tt := range tests {
@@ -119,9 +112,6 @@ func TestRequest_Protocol(t *testing.T) {
 
 func TestRequest_Transform(t *testing.T) {
 
-	hostport := "1000"
-	mockBackend := new(mocks.Backend)
-	mockBackend.On("URL", "").Return(hostport)
 	tests := []struct {
 		name        string
 		req         Request
@@ -130,31 +120,17 @@ func TestRequest_Transform(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name:        "",
-			req:         Request{},
-			backend:     nil,
-			expected:    Request{},
-			expectedErr: "backend cannot be nil",
-		},
-		{
-			name:    "",
-			req:     Request{},
-			backend: mockBackend,
-			expected: Request{
-				endpoint: hostport,
-			},
-			expectedErr: "",
+			name:     "",
+			req:      Request{},
+			backend:  nil,
+			expected: Request{},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.req.Transform(tt.backend)
-			if tt.expectedErr == "" {
-				assert.NoError(t, err)
-				assert.EqualValues(t, tt.expected, *got.(*Request), "Transform(%v)", tt.backend)
-			} else {
-				assert.Equal(t, tt.expectedErr, err.Error())
-			}
+			assert.NoError(t, err)
+			assert.EqualValues(t, tt.expected, *got.(*Request), "Transform(%v)", tt.backend)
 		})
 	}
 }

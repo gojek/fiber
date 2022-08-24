@@ -25,9 +25,11 @@ const (
 
 func TestDispatcher_Do(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    fiber.Request
-		expected fiber.Response
+		name             string
+		dispatcherConfig *DispatcherConfig
+		responseProto    proto.Message
+		input            fiber.Request
+		expected         fiber.Response
 	}{
 		{
 			name:  "non grpc request",
@@ -44,37 +46,28 @@ func TestDispatcher_Do(t *testing.T) {
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "missing endpoint/servicemethod",
+				Message: "fiber: bad request: missing endpoint/serviceMethod",
 			}),
 		},
 		{
 			name: "missing service method",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				endpoint:       fmt.Sprintf(":%d", port),
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "missing endpoint/servicemethod",
-			}),
-		},
-		{
-			name: "empty input",
-			input: &Request{
-				endpoint:      fmt.Sprintf(":%d", port),
-				ServiceMethod: serviceMethod,
-			},
-			expected: fiber.NewErrorResponse(errors.FiberError{
-				Code:    int(codes.InvalidArgument),
-				Message: "unable to convert payload to proto message",
+				Message: "fiber: bad request: missing endpoint/serviceMethod",
 			}),
 		},
 		{
 			name: "invalid server address",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				endpoint:       "localhost:50050",
-				ServiceMethod:  serviceMethod,
+				ResponseProto:  &testproto.PredictValuesResponse{},
+			},
+			dispatcherConfig: &DispatcherConfig{
+				ServiceMethod: serviceMethod,
+				Endpoint:      "localhost:50050",
 			},
 			expected: fiber.NewErrorResponse(errors.FiberError{
 				Code: int(codes.Unavailable),
@@ -87,18 +80,21 @@ func TestDispatcher_Do(t *testing.T) {
 			name: "success",
 			input: &Request{
 				RequestPayload: &testproto.PredictValuesRequest{},
-				endpoint:       fmt.Sprintf(":%d", port),
-				ServiceMethod:  serviceMethod,
 				ResponseProto:  &testproto.PredictValuesResponse{},
+			},
+			dispatcherConfig: &DispatcherConfig{
+				ServiceMethod: serviceMethod,
+				Endpoint:      fmt.Sprintf(":%d", port),
 			},
 			expected: &Response{
 				Metadata: metadata.New(map[string]string{
 					"content-type": "application/grpc",
 				}),
+				// Response is hardcoded in testserver
 				ResponsePayload: &testproto.PredictValuesResponse{
 					Metadata: &testproto.ResponseMetadata{
 						PredictionId: "123",
-						ExperimentId: strconv.Itoa(50055),
+						ExperimentId: strconv.Itoa(port),
 					},
 				},
 				Status: *status.New(codes.OK, "Success"),
@@ -111,7 +107,14 @@ func TestDispatcher_Do(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := &Dispatcher{}
+			var d fiber.Dispatcher
+			var err error
+			if tt.dispatcherConfig == nil {
+				d = &Dispatcher{}
+			} else {
+				d, err = NewDispatcher(*tt.dispatcherConfig)
+				assert.NoError(t, err)
+			}
 			response := d.Do(tt.input)
 
 			errResponse, ok := response.(*fiber.ErrorResponse)

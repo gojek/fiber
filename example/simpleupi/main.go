@@ -30,25 +30,30 @@ func main() {
 	component := fiber.NewEagerRouter("eager-router")
 	component.SetStrategy(new(extras.RandomRoutingStrategy))
 
-	upiDispatcher := &grpc.Dispatcher{}
-	caller1, _ := fiber.NewCaller("", upiDispatcher)
-	caller2, _ := fiber.NewCaller("", upiDispatcher)
+	upiDispatcher1, _ := grpc.NewDispatcher(grpc.DispatcherConfig{
+		ServiceMethod: serviceMethod,
+		Endpoint:      endpoint1,
+	})
+	upiDispatcher2, _ := grpc.NewDispatcher(grpc.DispatcherConfig{
+		ServiceMethod: serviceMethod,
+		Endpoint:      endpoint2,
+	})
 
-	proxy1 := fiber.NewProxy(
-		fiber.NewBackend("route-a", endpoint1),
-		caller1)
-	proxy2 := fiber.NewProxy(
-		fiber.NewBackend("route-b", endpoint2),
-		caller2)
+	// Caller is required to work with combiner, fanout. Using a dispatcher plainly doesn't work
+	caller1, _ := fiber.NewCaller("", upiDispatcher1)
+	caller2, _ := fiber.NewCaller("", upiDispatcher2)
 
+	// For grpc proxy, backend is not used to set endpoints unlike the http proxy
+	proxy1 := fiber.NewProxy(nil, caller1)
+	proxy2 := fiber.NewProxy(nil, caller2)
+
+	// Set both routes to the router component
 	component.SetRoutes(map[string]fiber.Component{
 		"route-a": proxy1,
 		"route-b": proxy2,
 	})
 
 	var req = &grpc.Request{
-		ServiceMethod: serviceMethod,
-		ResponseProto: &testproto.PredictValuesResponse{},
 		RequestPayload: &testproto.PredictValuesRequest{
 			PredictionRows: []*testproto.PredictionRow{
 				{
@@ -59,12 +64,14 @@ func main() {
 				},
 			},
 		},
+		ResponseProto: &testproto.PredictValuesResponse{},
 	}
 
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
 		if resp.StatusCode() == int(codes.OK) {
 			payload, ok := resp.Payload().(*testproto.PredictValuesResponse)
+
 			if !ok {
 				log.Fatalf("fail to convert response to proto")
 			}
@@ -75,5 +82,4 @@ func main() {
 	} else {
 		log.Fatalf("fail to receive response queue")
 	}
-
 }

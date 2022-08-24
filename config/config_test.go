@@ -8,9 +8,12 @@ import (
 
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/config"
-	"github.com/gojek/fiber/grpc"
+	fibergrpc "github.com/gojek/fiber/grpc"
 	fiberhttp "github.com/gojek/fiber/http"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 )
 
 type durCfgTestSuite struct {
@@ -72,7 +75,12 @@ func TestFromConfig(t *testing.T) {
 	httpCaller, _ := fiber.NewCaller("proxy_name", httpDispatcher)
 	httpProxy := fiber.NewProxy(backend, httpCaller)
 
-	grpcDispatcher := &grpc.Dispatcher{Timeout: timeout}
+	grpcDispatcher, _ := fibergrpc.NewDispatcher(
+		fibergrpc.DispatcherConfig{
+			ServiceMethod: "myService",
+			Endpoint:      "localhost:1234",
+			Timeout:       timeout,
+		})
 	grpcCaller, _ := fiber.NewCaller("proxy_name", grpcDispatcher)
 	grpcProxy := fiber.NewProxy(backend, grpcCaller)
 
@@ -97,7 +105,17 @@ func TestFromConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := config.FromConfig(tt.configPath)
 			assert.NoError(t, err)
-			assert.Equal(t, tt.want, got)
+			assert.True(t,
+				cmp.Equal(tt.want, got,
+					cmpopts.IgnoreUnexported(grpc.ClientConn{}),
+					cmp.AllowUnexported(
+						fiber.BaseComponent{},
+						fiber.Proxy{},
+						fiber.Caller{},
+						fibergrpc.Dispatcher{},
+						fiberhttp.Dispatcher{}),
+				),
+				"config not equal to expected")
 		})
 	}
 }

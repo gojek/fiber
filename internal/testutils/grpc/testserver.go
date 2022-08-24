@@ -3,12 +3,13 @@ package testutils
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"strconv"
 
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type grpcServer struct {
@@ -31,6 +32,7 @@ func RunTestUPIServer(port int) {
 	}
 	s := grpc.NewServer()
 	testproto.RegisterUniversalPredictionServiceServer(s, &grpcServer{port})
+	reflection.Register(s)
 	log.Printf("Running Test Server at %v", port)
 	go func() {
 		if err := s.Serve(listener); err != nil {

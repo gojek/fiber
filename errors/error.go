@@ -112,4 +112,15 @@ var (
 			Message: fmt.Sprintf("fiber: request cannot be completed: %s", err.Error()),
 		}
 	}
+
+	ErrInvalidInput = func(protocol string, err error) *FiberError {
+		statusCode := http.StatusBadRequest
+		if protocol == "GRPC" {
+			statusCode = int(codes.InvalidArgument)
+		}
+		return &FiberError{
+			Code:    statusCode,
+			Message: fmt.Sprintf("fiber: bad request: %s", err.Error()),
+		}
+	}
 )

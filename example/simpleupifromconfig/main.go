@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	port1         = 50555
-	port2         = 50556
-	serviceMethod = "testproto.UniversalPredictionService/PredictValues"
+	port1 = 50555
+	port2 = 50556
 )
 
 func main() {
@@ -28,7 +27,6 @@ func main() {
 	}
 
 	var req = &grpc.Request{
-		ServiceMethod: serviceMethod,
 		ResponseProto: &testproto.PredictValuesResponse{},
 		RequestPayload: &testproto.PredictValuesRequest{
 			PredictionRows: []*testproto.PredictionRow{
