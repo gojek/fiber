@@ -2,5 +2,5 @@ type: PROXY
 id: proxy_name
 timeout: "20s"
 endpoint: "localhost:1234"
-protocol: "grpC"
+protocol: "grpC" #intention to test case-insensitivity
 serviceMethod: "myService"
