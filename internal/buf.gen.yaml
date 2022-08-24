@@ -7,10 +7,10 @@ managed:
       - buf.build/googleapis/googleapis
 plugins:
   - name: go
-    out: internal/testdata/gen
+    out: testdata/gen
     opt: paths=import,module=github.com/gojek/fiber
   - name: go-grpc
-    out: internal/testdata/gen
+    out: testdata/gen
     opt:
       - paths=import,module=github.com/gojek/fiber
       - require_unimplemented_servers=false
