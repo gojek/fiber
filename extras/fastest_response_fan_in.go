@@ -28,7 +28,7 @@ func (r *FastestResponseFanIn) Aggregate(
 				return
 			}
 		}
-		out <- fiber.NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol().String()))
+		out <- fiber.NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol()))
 	}()
 	return <-out
 }

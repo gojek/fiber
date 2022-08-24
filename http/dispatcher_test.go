@@ -18,7 +18,7 @@ type unsupportedRequest struct {
 	*fiber.CachedPayload
 }
 
-func (r *unsupportedRequest) Protocol() fiber.Protocol {
+func (r *unsupportedRequest) Protocol() string {
 	return fiber.HTTP
 }
 

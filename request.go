@@ -5,18 +5,12 @@ type Request interface {
 	Header() map[string][]string
 	Clone() (Request, error)
 	OperationName() string
-	Protocol() Protocol
+	Protocol() string
 
 	Transform(backend Backend) (Request, error)
 }
 
-type Protocol string
-
-func (p Protocol) String() string {
-	return string(p)
-}
-
 const (
-	HTTP Protocol = "HTTP"
-	GRPC Protocol = "GRPC"
+	HTTP string = "HTTP"
+	GRPC string = "GRPC"
 )

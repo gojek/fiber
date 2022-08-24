@@ -80,26 +80,26 @@ func (d *Dispatcher) isValid() error {
 
 	if d.endpoint == "" || d.serviceMethod == "" {
 		return fiberError.ErrInvalidInput(
-			fiber.GRPC.String(),
+			fiber.GRPC,
 			errors.New("missing endpoint/serviceMethod"))
 	}
 
 	if d.timeout <= 0 {
 		return fiberError.ErrInvalidInput(
-			fiber.GRPC.String(),
+			fiber.GRPC,
 			errors.New("invalid or no timeout configured"))
 	}
 
 	if d.conn == nil {
 		return fiberError.NewFiberError(
-			fiber.GRPC.String(),
+			fiber.GRPC,
 			errors.New("connection not created, use dispatcher constructor"),
 		)
 	}
 
 	//if d.ResponseProto == nil {
 	//	return fiberError.NewFiberError(
-	//		fiber.GRPC.String(),
+	//		fiber.GRPC,
 	//		errors.New("response proto not specified in dispatcher"),
 	//	)
 	//}
@@ -118,7 +118,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 	if config.Endpoint == "" || config.ServiceMethod == "" {
 		return nil,
 			fiberError.ErrInvalidInput(
-				fiber.GRPC.String(),
+				fiber.GRPC,
 				errors.New("missing endpoint/serviceMethod"))
 	}
 
@@ -128,7 +128,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 		responseStatus, _ := status.FromError(err)
 		return nil,
 			fiberError.NewFiberError(
-				fiber.GRPC.String(),
+				fiber.GRPC,
 				errors.New(responseStatus.String()),
 			)
 	}

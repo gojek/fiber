@@ -56,12 +56,12 @@ func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors
 			if ok {
 				return resp, nil
 			}
-			return nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP.String())
+			return nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP)
 		case <-time.After(h.options.Timeout):
-			return nil, fiberErrors.ErrRequestTimeout(fiber.HTTP.String())
+			return nil, fiberErrors.ErrRequestTimeout(fiber.HTTP)
 		}
 	} else {
-		return nil, fiberErrors.ErrReadRequestFailed(fiber.HTTP.String(), err)
+		return nil, fiberErrors.ErrReadRequestFailed(fiber.HTTP, err)
 	}
 }
 
@@ -78,7 +78,7 @@ func (h *Handler) write(resp fiber.Response, writer http.ResponseWriter) (err er
 	writer.WriteHeader(resp.StatusCode())
 	bytePayLoad, ok := resp.Payload().([]byte)
 	if !ok {
-		return fiberErrors.NewFiberError(fiber.HTTP.String(), errors.New("unable to parse payload"))
+		return fiberErrors.NewFiberError(fiber.HTTP, errors.New("unable to parse payload"))
 	}
 	_, err = writer.Write(bytePayLoad)
 	return err

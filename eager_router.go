@@ -101,14 +101,14 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 				}
 			case err, ok := <-errCh:
 				if ok {
-					masterResponse = NewErrorResponse(errors.NewFiberError(req.Protocol().String(), err))
+					masterResponse = NewErrorResponse(errors.NewFiberError(req.Protocol(), err))
 				} else {
 					errCh = nil
 				}
 			case <-ctx.Done():
 				if routes == nil {
 					// timeout exceeded, but no routes received. Sending error response
-					masterResponse = NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol().String()))
+					masterResponse = NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol()))
 				} else {
 					// timeout exceeded
 					responseCh = nil
@@ -132,9 +132,9 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 				// all expected routes tried, no OK response received from either of them
 				if currentRouteIdx >= len(routes) {
 					if len(routes) == 0 {
-						masterResponse = NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol().String()))
+						masterResponse = NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol()))
 					} else {
-						masterResponse = NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol().String()))
+						masterResponse = NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol()))
 					}
 				}
 			}

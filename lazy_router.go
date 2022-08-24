@@ -61,12 +61,12 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 				}
 			case err, ok := <-errCh:
 				if ok {
-					out <- NewErrorResponse(errors.NewFiberError(req.Protocol().String(), err))
+					out <- NewErrorResponse(errors.NewFiberError(req.Protocol(), err))
 					return
 				}
 				errCh = nil
 			case <-ctx.Done():
-				out <- NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol().String()))
+				out <- NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol()))
 				return
 			}
 		}
@@ -94,13 +94,13 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 							return
 						}
 					case <-ctx.Done():
-						out <- NewErrorResponse(errors.ErrRequestTimeout(req.Protocol().String()))
+						out <- NewErrorResponse(errors.ErrRequestTimeout(req.Protocol()))
 						return
 					}
 				}
 			}
 		} else {
-			out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol().String()))
+			out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol()))
 		}
 	}()
 

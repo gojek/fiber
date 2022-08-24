@@ -177,7 +177,7 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 
 	var dispatcher fiber.Dispatcher
 	var err error
-	if strings.EqualFold(c.Protocol, fiber.GRPC.String()) {
+	if strings.EqualFold(c.Protocol, fiber.GRPC) {
 		//TODO response proto cant be parse from yaml simply, to use server reflection and fetch proto dynamically
 		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
 			ServiceMethod: c.ServiceMethod,

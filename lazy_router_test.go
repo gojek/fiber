@@ -49,7 +49,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP.String()))}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP))}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
@@ -79,7 +79,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			},
 			strategyLatency: 50 * time.Millisecond,
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout(fiber.HTTP.String())),
+				testUtilsHttp.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout(fiber.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -87,7 +87,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:            "error: strategy timeout exceeded",
 			strategyLatency: 200 * time.Millisecond,
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(fiber.HTTP.String())),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(fiber.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -95,7 +95,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:     "error: routing strategy returned empty routes",
 			strategy: []string{},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(fiber.HTTP.String())),
+				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(fiber.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -103,7 +103,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:              "error: routing strategy responded with exception",
 			strategyException: errors.New("unexpected exception happened"),
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(fiber.HTTP.String(), errors.New("unexpected exception happened"))),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(fiber.HTTP, errors.New("unexpected exception happened"))),
 			},
 			timeout: 100 * time.Millisecond,
 		},

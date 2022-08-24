@@ -17,7 +17,7 @@ type Request struct {
 	ResponseProto proto.Message
 }
 
-func (r *Request) Protocol() fiber.Protocol {
+func (r *Request) Protocol() string {
 	return fiber.GRPC
 }
 

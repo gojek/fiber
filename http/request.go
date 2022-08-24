@@ -18,7 +18,7 @@ type Request struct {
 	*http.Request
 }
 
-func (r *Request) Protocol() fiber.Protocol {
+func (r *Request) Protocol() string {
 	return fiber.HTTP
 }
 

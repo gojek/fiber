@@ -40,7 +40,7 @@ func NewErrorResponse(err error) Response {
 	if castedError, ok := err.(*errors.FiberError); ok {
 		fiberErr = castedError
 	} else {
-		fiberErr = errors.NewFiberError(HTTP.String(), err)
+		fiberErr = errors.NewFiberError(HTTP, err)
 	}
 	payload, _ := fiberErr.ToJSON()
 	return &ErrorResponse{

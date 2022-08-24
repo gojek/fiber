@@ -82,7 +82,7 @@ func TestFanOut_Dispatch(t *testing.T) {
 			name: "one route/one NOK response",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP.String()))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP))},
 				},
 			},
 		},
