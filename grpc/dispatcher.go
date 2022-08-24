@@ -21,11 +21,11 @@ const (
 
 type Dispatcher struct {
 	timeout time.Duration
-	// ServiceMethod is the service and method of server point in the format "{grpc_service_name}/{method_name}"
+	// serviceMethod is the service and method of server point in the format "{grpc_service_name}/{method_name}"
 	serviceMethod string
-	// Endpoint is the host+port of the grpc server, eg "127.0.0.1:50050"
+	// endpoint is the host+port of the grpc server, eg "127.0.0.1:50050"
 	endpoint string
-
+	// conn is the grpc connection dialed upon creation of dispatcher
 	conn *grpc.ClientConn
 }
 
@@ -53,8 +53,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 		return fiber.NewErrorResponse(err)
 	}
 
-	//TODO add timeout to dial option
-	ctx := context.Background()
+	ctx, _ := context.WithTimeout(context.Background(), d.timeout)
 	ctx = metadata.NewOutgoingContext(ctx, grpcRequest.Metadata)
 
 	responseProto := proto.Clone(grpcRequest.ResponseProto)
@@ -123,8 +122,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 				errors.New("missing endpoint/serviceMethod"))
 	}
 
-	//TODO pass in dialoption
-	conn, err := grpc.Dial(config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(context.Background(), config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)
