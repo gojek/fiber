@@ -103,7 +103,7 @@ func TestFromConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := config.FromConfig(tt.configPath)
+			got, err := config.InitComponentFromConfig(tt.configPath)
 			assert.NoError(t, err)
 			assert.True(t,
 				cmp.Equal(tt.want, got,

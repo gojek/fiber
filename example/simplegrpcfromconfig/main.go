@@ -21,7 +21,7 @@ func main() {
 	testutils.RunTestUPIServer(port2)
 
 	// initialize root-level fiber component from the config
-	component, err := config.FromConfig("./example/simpleupifromconfig/fiber.yaml")
+	component, err := config.InitComponentFromConfig("./example/simpleupifromconfig/fiber.yaml")
 	if err != nil {
 		log.Fatalf("\nerror: %v\n", err)
 	}

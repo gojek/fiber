@@ -201,9 +201,9 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	return fiber.NewProxy(backend, caller), nil
 }
 
-// FromConfig takes in the path to a config file, parses the contents
+// InitComponentFromConfig takes in the path to a config file, parses the contents
 // and if successful, constructs a fiber Component
-func FromConfig(configPath string) (fiber.Component, error) {
+func InitComponentFromConfig(configPath string) (fiber.Component, error) {
 	if yamlFile, err := ioutil.ReadFile(configPath); err != nil {
 		return nil, err
 	} else if cfg, err := parseConfig(yamlFile); err != nil {
