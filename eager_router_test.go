@@ -243,7 +243,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
 		received := make([]fiber.Response, 0)
-		request := testUtilsHttp.MockReq("GET", "testUtilsHttp://test:8080", "")
+		request := testUtilsHttp.MockReq("GET", "http://test:8080", "")
 		for responsesCh := router.Dispatch(ctx, request).Iter(); ; {
 			select {
 			case resp, ok := <-responsesCh:

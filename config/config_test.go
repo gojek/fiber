@@ -67,7 +67,6 @@ func TestDurationMarshalJSON(t *testing.T) {
 }
 
 func TestFromConfig(t *testing.T) {
-
 	timeout := 20 * time.Second
 	backend := fiber.NewBackend("proxy_name", "localhost:1234")
 
