@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"github.com/gojek/fiber"
+	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
 )
@@ -14,8 +15,8 @@ type Request struct {
 	// RequestPayload is the grpc expected response type
 }
 
-func (r *Request) Protocol() string {
-	return fiber.GRPC
+func (r *Request) Protocol() protocol.Protocol {
+	return protocol.GRPC
 }
 
 func (r *Request) Payload() interface{} {

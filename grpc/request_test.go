@@ -5,6 +5,7 @@ import (
 
 	"github.com/gojek/fiber"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
+	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
@@ -106,7 +107,7 @@ func TestRequest_Payload(t *testing.T) {
 func TestRequest_Protocol(t *testing.T) {
 
 	req := Request{}
-	assert.Equal(t, fiber.GRPC, req.Protocol())
+	assert.Equal(t, protocol.GRPC, req.Protocol())
 }
 
 func TestRequest_Transform(t *testing.T) {

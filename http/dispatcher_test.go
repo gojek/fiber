@@ -10,6 +10,7 @@ import (
 	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
 	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,8 +19,8 @@ type unsupportedRequest struct {
 	*fiber.CachedPayload
 }
 
-func (r *unsupportedRequest) Protocol() string {
-	return fiber.HTTP
+func (r *unsupportedRequest) Protocol() protocol.Protocol {
+	return protocol.HTTP
 }
 
 func (r *unsupportedRequest) Clone() (fiber.Request, error) {

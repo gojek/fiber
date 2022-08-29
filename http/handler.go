@@ -8,6 +8,7 @@ import (
 
 	"github.com/gojek/fiber"
 	fiberErrors "github.com/gojek/fiber/errors"
+	"github.com/gojek/fiber/protocol"
 )
 
 // Options captures a set of options that can be used as configurations for
@@ -56,12 +57,12 @@ func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors
 			if ok {
 				return resp, nil
 			}
-			return nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP)
+			return nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)
 		case <-time.After(h.options.Timeout):
-			return nil, fiberErrors.ErrRequestTimeout(fiber.HTTP)
+			return nil, fiberErrors.ErrRequestTimeout(protocol.HTTP)
 		}
 	} else {
-		return nil, fiberErrors.ErrReadRequestFailed(fiber.HTTP, err)
+		return nil, fiberErrors.ErrReadRequestFailed(protocol.HTTP, err)
 	}
 }
 
@@ -78,7 +79,7 @@ func (h *Handler) write(resp fiber.Response, writer http.ResponseWriter) (err er
 	writer.WriteHeader(resp.StatusCode())
 	bytePayLoad, ok := resp.Payload().([]byte)
 	if !ok {
-		return fiberErrors.NewFiberError(fiber.HTTP, errors.New("unable to parse payload"))
+		return fiberErrors.NewFiberError(protocol.HTTP, errors.New("unable to parse payload"))
 	}
 	_, err = writer.Write(bytePayLoad)
 	return err

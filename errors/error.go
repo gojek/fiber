@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc/codes"
 )
 
@@ -27,7 +28,7 @@ func (err *FiberError) ToJSON() ([]byte, error) {
 // NewFiberError returns an error of type FiberError from the input error object.
 // If the input error is already of the required type, it is returned as is.
 // If not, a generic request failed error is created from the given error.
-func NewFiberError(protocol string, err error) *FiberError {
+func NewFiberError(protocol protocol.Protocol, err error) *FiberError {
 	if fiberError, ok := err.(FiberError); ok {
 		return &fiberError
 	}
@@ -37,7 +38,7 @@ func NewFiberError(protocol string, err error) *FiberError {
 var (
 	// ErrRouterStrategyTimeoutExceeded is a FiberError that's returned when
 	// the routing strategy fails to respond within given timeout
-	ErrRouterStrategyTimeoutExceeded = func(protocol string) *FiberError {
+	ErrRouterStrategyTimeoutExceeded = func(protocol protocol.Protocol) *FiberError {
 		statusCode := http.StatusInternalServerError
 		if protocol == "GRPC" {
 			statusCode = int(codes.Internal)
@@ -50,7 +51,7 @@ var (
 
 	// ErrRouterStrategyReturnedEmptyRoutes is a FiberError that's returned when
 	// the routing strategy routing strategy returns an empty routes list
-	ErrRouterStrategyReturnedEmptyRoutes = func(protocol string) *FiberError {
+	ErrRouterStrategyReturnedEmptyRoutes = func(protocol protocol.Protocol) *FiberError {
 		statusCode := http.StatusNotImplemented
 		if protocol == "GRPC" {
 			statusCode = int(codes.Unimplemented)
@@ -63,7 +64,7 @@ var (
 
 	// ErrServiceUnavailable is a FiberError that's returned when
 	// none of the routes in the routing strategy return a valid response
-	ErrServiceUnavailable = func(protocol string) *FiberError {
+	ErrServiceUnavailable = func(protocol protocol.Protocol) *FiberError {
 		statusCode := http.StatusServiceUnavailable
 		if protocol == "GRPC" {
 			statusCode = int(codes.Unavailable)
@@ -76,7 +77,7 @@ var (
 
 	// ErrRequestTimeout is a FiberError that's returned when
 	// no response if received for a given HTTP request within the configured timeout
-	ErrRequestTimeout = func(protocol string) *FiberError {
+	ErrRequestTimeout = func(protocol protocol.Protocol) *FiberError {
 		statusCode := http.StatusRequestTimeout
 		if protocol == "GRPC" {
 			statusCode = int(codes.DeadlineExceeded)
@@ -89,7 +90,7 @@ var (
 
 	// ErrReadRequestFailed is a FiberError that's returned when a http request cannot
 	// be read successfully
-	ErrReadRequestFailed = func(protocol string, err error) *FiberError {
+	ErrReadRequestFailed = func(protocol protocol.Protocol, err error) *FiberError {
 		statusCode := http.StatusInternalServerError
 		if protocol == "GRPC" {
 			statusCode = int(codes.Internal)
@@ -102,7 +103,7 @@ var (
 
 	// ErrRequestFailed is a generic error that is created when problems are encountered fulfilling
 	// a request
-	ErrRequestFailed = func(protocol string, err error) *FiberError {
+	ErrRequestFailed = func(protocol protocol.Protocol, err error) *FiberError {
 		statusCode := http.StatusInternalServerError
 		if protocol == "GRPC" {
 			statusCode = int(codes.Internal)
@@ -113,7 +114,7 @@ var (
 		}
 	}
 
-	ErrInvalidInput = func(protocol string, err error) *FiberError {
+	ErrInvalidInput = func(protocol protocol.Protocol, err error) *FiberError {
 		statusCode := http.StatusBadRequest
 		if protocol == "GRPC" {
 			statusCode = int(codes.InvalidArgument)

@@ -12,6 +12,7 @@ import (
 	"github.com/gojek/fiber/http"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	testutils "github.com/gojek/fiber/internal/testutils/grpc"
+	"github.com/gojek/fiber/protocol"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +98,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
 		},
 		{
@@ -109,7 +110,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
 		},
 		{
@@ -121,7 +122,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
 		},
 		{
@@ -133,7 +134,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
 		},
 		{
@@ -146,7 +147,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.NewFiberError(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: unable to get reflection information, ensure server reflection is enable and config are correct")),
 		},
 		{
@@ -159,7 +160,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: nil,
 			expectedErr: fiberError.NewFiberError(
-				fiber.GRPC,
+				protocol.GRPC,
 				errors.New("grpc dispatcher: unable to find proto in registry")),
 		},
 		{

@@ -10,6 +10,7 @@ import (
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
 	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -82,7 +83,7 @@ func TestFanOut_Dispatch(t *testing.T) {
 			name: "one route/one NOK response",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(503, "", nil, errors.ErrServiceUnavailable(fiber.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(503, "", nil, errors.ErrServiceUnavailable(protocol.HTTP))},
 				},
 			},
 		},

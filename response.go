@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"github.com/gojek/fiber/errors"
+	"github.com/gojek/fiber/protocol"
 )
 
 type Response interface {
@@ -40,7 +41,7 @@ func NewErrorResponse(err error) Response {
 	if castedError, ok := err.(*errors.FiberError); ok {
 		fiberErr = castedError
 	} else {
-		fiberErr = errors.NewFiberError(HTTP, err)
+		fiberErr = errors.NewFiberError(protocol.HTTP, err)
 	}
 	payload, _ := fiberErr.ToJSON()
 	return &ErrorResponse{

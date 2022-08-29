@@ -11,6 +11,7 @@ import (
 	fiberErrors "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
 	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +50,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP))}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
@@ -79,7 +80,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			},
 			strategyLatency: 50 * time.Millisecond,
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout(fiber.HTTP)),
+				testUtilsHttp.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -87,7 +88,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:            "error: strategy timeout exceeded",
 			strategyLatency: 200 * time.Millisecond,
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(fiber.HTTP)),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -95,7 +96,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:     "error: routing strategy returned empty routes",
 			strategy: []string{},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(fiber.HTTP)),
+				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -103,7 +104,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:              "error: routing strategy responded with exception",
 			strategyException: errors.New("unexpected exception happened"),
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(fiber.HTTP, errors.New("unexpected exception happened"))),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(protocol.HTTP, errors.New("unexpected exception happened"))),
 			},
 			timeout: 100 * time.Millisecond,
 		},

@@ -11,6 +11,7 @@ import (
 	fiberErrors "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
 	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +59,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			name: "primary route failed, receiving from fallback",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)},
@@ -115,7 +116,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			name: "primary route exceeds timeout, fallback route failed, receiving from the next fallback",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{
@@ -139,7 +140,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
 					testUtilsHttp.DelayedResponse{
-						Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP)),
+						Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)),
 					},
 				},
 				"route-b": {
@@ -150,7 +151,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 				},
 				"route-c": {
 					testUtilsHttp.DelayedResponse{
-						Response: testUtilsHttp.MockResp(408, "C-NOK", nil, fiberErrors.ErrRequestTimeout(fiber.HTTP)),
+						Response: testUtilsHttp.MockResp(408, "C-NOK", nil, fiberErrors.ErrRequestTimeout(protocol.HTTP)),
 					},
 				},
 			},
@@ -158,14 +159,14 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 				"route-a", "route-b", "route-c",
 			},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP)),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)),
 			},
 		},
 		{
 			name: "routing strategy response comes after all routes replied",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(fiber.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)},
@@ -194,7 +195,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 				"route-a", "route-b",
 			},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(fiber.HTTP)),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(protocol.HTTP)),
 			},
 		},
 		{
@@ -209,7 +210,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			},
 			strategy: []string{},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(fiber.HTTP)),
+				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(protocol.HTTP)),
 			},
 		},
 		{
@@ -224,7 +225,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			},
 			strategyException: errors.New("routing strategy exception"),
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(fiber.HTTP, errors.New("routing strategy exception"))),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(protocol.HTTP, errors.New("routing strategy exception"))),
 			},
 		},
 	}

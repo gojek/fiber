@@ -12,6 +12,7 @@ import (
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/grpc"
 	fiberHTTP "github.com/gojek/fiber/http"
+	"github.com/gojek/fiber/protocol"
 	"github.com/gojek/fiber/types"
 )
 
@@ -180,7 +181,7 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	var dispatcher fiber.Dispatcher
 	var err error
 	var backend fiber.Backend
-	if strings.EqualFold(c.Protocol, fiber.GRPC) {
+	if strings.EqualFold(c.Protocol, string(protocol.GRPC)) {
 		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
 			Service:           c.Service,
 			Method:            c.Method,

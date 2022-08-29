@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/gojek/fiber"
+	"github.com/gojek/fiber/protocol"
 )
 
 // Request wraps a standard http request
@@ -18,8 +19,8 @@ type Request struct {
 	*http.Request
 }
 
-func (r *Request) Protocol() string {
-	return fiber.HTTP
+func (r *Request) Protocol() protocol.Protocol {
+	return protocol.HTTP
 }
 
 func (r *Request) Header() map[string][]string {

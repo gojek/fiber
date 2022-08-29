@@ -9,6 +9,7 @@ import (
 
 	"github.com/gojek/fiber"
 	fiberError "github.com/gojek/fiber/errors"
+	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -96,7 +97,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 
 	if config.Endpoint == "" || config.Service == "" || config.Method == "" || config.ResponseProtoName == "" {
 		return nil, fiberError.ErrInvalidInput(
-			fiber.GRPC,
+			protocol.GRPC,
 			errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)"))
 	}
 
@@ -105,7 +106,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)
 		return nil, fiberError.ErrRequestFailed(
-			fiber.GRPC,
+			protocol.GRPC,
 			errors.New("grpc dispatcher: "+responseStatus.String()))
 	}
 
@@ -119,15 +120,15 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 	reflectionInfoClient, err := reflectionClient.ServerReflectionInfo(context.Background())
 	if err != nil {
 		return nil, fiberError.NewFiberError(
-			fiber.GRPC,
+			protocol.GRPC,
 			errors.New("grpc dispatcher: unable to get reflection information, ensure server reflection is enable and config are correct"))
 	}
 	if err = reflectionInfoClient.Send(req); err != nil {
-		return nil, fiberError.NewFiberError(fiber.GRPC, err)
+		return nil, fiberError.NewFiberError(protocol.GRPC, err)
 	}
 	reflectionResponse, err := reflectionInfoClient.Recv()
 	if err != nil {
-		return nil, fiberError.NewFiberError(fiber.GRPC, err)
+		return nil, fiberError.NewFiberError(protocol.GRPC, err)
 	}
 
 	// From the FileDescriptorProtos, find the proto matching config proto name
@@ -136,7 +137,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 
 		fd := &descriptorpb.FileDescriptorProto{}
 		if err := proto.Unmarshal(fdBytes, fd); err != nil {
-			return nil, fiberError.NewFiberError(fiber.GRPC, err)
+			return nil, fiberError.NewFiberError(protocol.GRPC, err)
 		}
 		fileDescriptorProtos = append(fileDescriptorProtos, fd)
 	}
@@ -155,7 +156,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 	fileDescriptor, err := protodesc.NewFile(fdProto, protoregistry.GlobalFiles)
 	if err != nil {
 		return nil, fiberError.NewFiberError(
-			fiber.GRPC,
+			protocol.GRPC,
 			errors.New("grpc dispatcher: unable to find proto in registry"))
 	}
 	messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(config.ResponseProtoName))
