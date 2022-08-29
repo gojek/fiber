@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -10,10 +11,12 @@ import (
 	"github.com/gojek/fiber/config"
 	fibergrpc "github.com/gojek/fiber/grpc"
 	fiberhttp "github.com/gojek/fiber/http"
+	testutils "github.com/gojek/fiber/internal/testutils/grpc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 type durCfgTestSuite struct {
@@ -21,6 +24,8 @@ type durCfgTestSuite struct {
 	duration time.Duration
 	success  bool
 }
+
+const port = 50555
 
 func TestDurationUnmarshalJSON(t *testing.T) {
 	tests := map[string]durCfgTestSuite{
@@ -73,15 +78,20 @@ func TestFromConfig(t *testing.T) {
 	httpDispatcher, _ := fiberhttp.NewDispatcher(&http.Client{Timeout: timeout})
 	httpCaller, _ := fiber.NewCaller("proxy_name", httpDispatcher)
 	httpProxy := fiber.NewProxy(backend, httpCaller)
+	testutils.RunTestUPIServer(testutils.GrpcTestServer{
+		Port: port,
+	})
 
 	grpcDispatcher, _ := fibergrpc.NewDispatcher(
 		fibergrpc.DispatcherConfig{
-			ServiceMethod: "myService",
-			Endpoint:      "localhost:1234",
-			Timeout:       timeout,
+			Service:           "testproto.UniversalPredictionService",
+			Method:            "PredictValues",
+			ResponseProtoName: "PredictValuesResponse",
+			Endpoint:          fmt.Sprintf("localhost:%d", port),
+			Timeout:           timeout,
 		})
 	grpcCaller, _ := fiber.NewCaller("proxy_name", grpcDispatcher)
-	grpcProxy := fiber.NewProxy(backend, grpcCaller)
+	grpcProxy := fiber.NewProxy(nil, grpcCaller)
 
 	tests := []struct {
 		name       string
@@ -106,7 +116,7 @@ func TestFromConfig(t *testing.T) {
 			assert.NoError(t, err)
 			assert.True(t,
 				cmp.Equal(tt.want, got,
-					cmpopts.IgnoreUnexported(grpc.ClientConn{}),
+					cmpopts.IgnoreUnexported(grpc.ClientConn{}, dynamicpb.Message{}),
 					cmp.AllowUnexported(
 						fiber.BaseComponent{},
 						fiber.Proxy{},

@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/gojek/fiber/config"
 	"github.com/gojek/fiber/grpc"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	testutils "github.com/gojek/fiber/internal/testutils/grpc"
-	"log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -17,8 +20,12 @@ const (
 
 func main() {
 
-	testutils.RunTestUPIServer(port1)
-	testutils.RunTestUPIServer(port2)
+	testutils.RunTestUPIServer(testutils.GrpcTestServer{
+		Port: port1,
+	})
+	testutils.RunTestUPIServer(testutils.GrpcTestServer{
+		Port: port2,
+	})
 
 	// initialize root-level fiber component from the config
 	component, err := config.InitComponentFromConfig("./example/simplegrpcfromconfig/fiber.yaml")
@@ -27,7 +34,6 @@ func main() {
 	}
 
 	var req = &grpc.Request{
-		ResponseProto: &testproto.PredictValuesResponse{},
 		RequestPayload: &testproto.PredictValuesRequest{
 			PredictionRows: []*testproto.PredictionRow{
 				{
@@ -42,12 +48,17 @@ func main() {
 
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
-		if resp.StatusCode() == 0 {
-			payload, ok := resp.Payload().(*testproto.PredictValuesResponse)
+		if resp.StatusCode() == int(codes.OK) {
+			responseProto := &testproto.PredictValuesResponse{}
+			err := proto.Unmarshal(resp.Payload().([]byte), responseProto)
+			if err != nil {
+				log.Fatalf("fail to unmarshal to proto")
+			}
+
 			if !ok {
 				log.Fatalf("fail to convert response to proto")
 			}
-			log.Print(payload.String())
+			log.Print(responseProto.String())
 		} else {
 			log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
 		}

@@ -1,29 +1,219 @@
 package grpc
 
 import (
+	"errors"
 	"fmt"
-	"log"
-	"strconv"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/errors"
+	fiberError "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/http"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	testutils "github.com/gojek/fiber/internal/testutils/grpc"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 const (
-	port          = 50055
-	serviceMethod = "testproto.UniversalPredictionService/PredictValues"
+	port              = 50055
+	service           = "testproto.UniversalPredictionService"
+	method            = "PredictValues"
+	responseProtoName = "PredictValuesResponse"
 )
 
+var mockResponse *testproto.PredictValuesResponse
+
+func TestMain(m *testing.M) {
+
+	mockResponse = &testproto.PredictValuesResponse{
+		Predictions: []*testproto.PredictionResult{
+			{
+				RowId: "1",
+				Value: &testproto.NamedValue{
+					Name:        "str",
+					Type:        testproto.NamedValue_TYPE_STRING,
+					StringValue: "213",
+				},
+			},
+			{
+				RowId: "2",
+				Value: &testproto.NamedValue{
+					Name:        "double",
+					Type:        testproto.NamedValue_TYPE_DOUBLE,
+					DoubleValue: 123.45,
+				},
+			},
+			{
+				RowId: "3",
+				Value: &testproto.NamedValue{
+					Name:         "int",
+					Type:         testproto.NamedValue_TYPE_INTEGER,
+					IntegerValue: 2,
+				},
+			},
+		},
+		Metadata: &testproto.ResponseMetadata{
+			PredictionId: "abc",
+			ModelName:    "linear",
+			ModelVersion: "1.2",
+			ExperimentId: "1",
+			TreatmentId:  "2",
+		},
+	}
+
+	//Test server will run upi server at port 50055
+	testutils.RunTestUPIServer(
+		testutils.GrpcTestServer{
+			Port:         port,
+			MockResponse: mockResponse,
+		},
+	)
+	os.Exit(m.Run())
+}
+
+func TestNewDispatcher(t *testing.T) {
+	tests := []struct {
+		name              string
+		dispatcherConfig  DispatcherConfig
+		expected          *Dispatcher
+		expectedProtoName string
+		expectedErr       *fiberError.FiberError
+	}{
+		{
+			name: "empty endpoint",
+			dispatcherConfig: DispatcherConfig{
+				Service:           service,
+				Method:            method,
+				ResponseProtoName: responseProtoName,
+			},
+			expected: nil,
+			expectedErr: fiberError.ErrInvalidInput(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+		},
+		{
+			name: "empty service",
+			dispatcherConfig: DispatcherConfig{
+				Method:            method,
+				ResponseProtoName: responseProtoName,
+				Endpoint:          fmt.Sprintf(":%d", port),
+			},
+			expected: nil,
+			expectedErr: fiberError.ErrInvalidInput(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+		},
+		{
+			name: "empty method",
+			dispatcherConfig: DispatcherConfig{
+				Service:           service,
+				ResponseProtoName: responseProtoName,
+				Endpoint:          fmt.Sprintf(":%d", port),
+			},
+			expected: nil,
+			expectedErr: fiberError.ErrInvalidInput(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+		},
+		{
+			name: "empty proto",
+			dispatcherConfig: DispatcherConfig{
+				Service:  service,
+				Method:   method,
+				Endpoint: fmt.Sprintf(":%d", port),
+			},
+			expected: nil,
+			expectedErr: fiberError.ErrInvalidInput(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+		},
+		{
+			name: "invalid endpoint",
+			dispatcherConfig: DispatcherConfig{
+				Service:           service,
+				Method:            method,
+				Endpoint:          ":1",
+				ResponseProtoName: responseProtoName,
+			},
+			expected: nil,
+			expectedErr: fiberError.NewFiberError(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: unable to get reflection information, ensure server reflection is enable and config are correct")),
+		},
+		{
+			name: "invalid response",
+			dispatcherConfig: DispatcherConfig{
+				Service:           service,
+				Method:            method,
+				Endpoint:          fmt.Sprintf(":%d", port),
+				ResponseProtoName: "non existent proto",
+			},
+			expected: nil,
+			expectedErr: fiberError.NewFiberError(
+				fiber.GRPC,
+				errors.New("grpc dispatcher: unable to find proto in registry")),
+		},
+		{
+			name: "ok response",
+			dispatcherConfig: DispatcherConfig{
+				Service:           service,
+				Method:            method,
+				Endpoint:          fmt.Sprintf(":%d", port),
+				ResponseProtoName: responseProtoName,
+				Timeout:           time.Second * 5,
+			},
+			expected: &Dispatcher{
+				timeout:       time.Second * 5,
+				serviceMethod: fmt.Sprintf("%s/%s", service, method),
+				endpoint:      fmt.Sprintf(":%d", port),
+			},
+			expectedProtoName: responseProtoName,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewDispatcher(tt.dispatcherConfig)
+			if tt.expectedErr != nil {
+				fiberErr, ok := err.(*fiberError.FiberError)
+				require.True(t, ok, "error not fiber error")
+				require.Equal(t, tt.expectedErr, fiberErr)
+			} else {
+				require.NoError(t, err)
+				// responseProto and conn are ignored as they have pointer which value will not be identical
+				diff := cmp.Diff(tt.expected, got,
+					cmpopts.IgnoreFields(Dispatcher{}, "responseProto", "conn"),
+					cmp.AllowUnexported(Dispatcher{}),
+				)
+				require.Empty(t, diff)
+				responseProto, ok := got.responseProto.(*dynamicpb.Message)
+				require.True(t, ok, "fail to convert response proto")
+				require.Equal(t, tt.expectedProtoName, string(responseProto.Type().Descriptor().Name()))
+			}
+		})
+	}
+}
+
 func TestDispatcher_Do(t *testing.T) {
+	dispatcherConfig := DispatcherConfig{
+		Service:           service,
+		Method:            method,
+		Endpoint:          fmt.Sprintf(":%d", port),
+		ResponseProtoName: responseProtoName,
+		Timeout:           time.Second * 5,
+	}
+	dispatcher, err := NewDispatcher(dispatcherConfig)
+	require.NoError(t, err, "unable to create dispatcher")
+
 	tests := []struct {
 		name             string
 		dispatcherConfig *DispatcherConfig
@@ -34,111 +224,46 @@ func TestDispatcher_Do(t *testing.T) {
 		{
 			name:  "non grpc request",
 			input: &http.Request{},
-			expected: fiber.NewErrorResponse(errors.FiberError{
+			expected: fiber.NewErrorResponse(fiberError.FiberError{
 				Code:    int(codes.InvalidArgument),
-				Message: "fiber: grpc.Dispatcher supports only grpc.Request type of requests",
-			}),
-		},
-		{
-			name: "missing endpoint",
-			input: &Request{
-				RequestPayload: &testproto.PredictValuesRequest{},
-			},
-			expected: fiber.NewErrorResponse(errors.FiberError{
-				Code:    int(codes.InvalidArgument),
-				Message: "fiber: bad request: missing endpoint/serviceMethod",
-			}),
-		},
-		{
-			name: "missing service method",
-			input: &Request{
-				RequestPayload: &testproto.PredictValuesRequest{},
-			},
-			expected: fiber.NewErrorResponse(errors.FiberError{
-				Code:    int(codes.InvalidArgument),
-				Message: "fiber: bad request: missing endpoint/serviceMethod",
-			}),
-		},
-		{
-			name: "invalid server address",
-			input: &Request{
-				RequestPayload: &testproto.PredictValuesRequest{},
-				ResponseProto:  &testproto.PredictValuesResponse{},
-			},
-			dispatcherConfig: &DispatcherConfig{
-				ServiceMethod: serviceMethod,
-				Endpoint:      "localhost:50050",
-			},
-			expected: fiber.NewErrorResponse(errors.FiberError{
-				Code: int(codes.Unavailable),
-				Message: "rpc error: code = Unavailable desc = connection error: desc = " +
-					"\"transport: Error while dialing dial tcp [::1]:50050: " +
-					"connect: connection refused\"",
+				Message: "fiber: grpc dispatcher: only grpc.Request type of requests are supported",
 			}),
 		},
 		{
 			name: "success",
 			input: &Request{
-				RequestPayload: &testproto.PredictValuesRequest{},
-				ResponseProto:  &testproto.PredictValuesResponse{},
-			},
-			dispatcherConfig: &DispatcherConfig{
-				ServiceMethod: serviceMethod,
-				Endpoint:      fmt.Sprintf(":%d", port),
-			},
+				RequestPayload: &testproto.PredictValuesRequest{}},
 			expected: &Response{
 				Metadata: metadata.New(map[string]string{
 					"content-type": "application/grpc",
 				}),
-				// Response is hardcoded in testserver
-				ResponsePayload: &testproto.PredictValuesResponse{
-					Metadata: &testproto.ResponseMetadata{
-						PredictionId: "123",
-						ExperimentId: strconv.Itoa(port),
-					},
-				},
 				Status: *status.New(codes.OK, "Success"),
 			},
 		},
 	}
 
-	//Test server will run upi server at port 50055
-	testutils.RunTestUPIServer(port)
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var d fiber.Dispatcher
-			var err error
-			if tt.dispatcherConfig == nil {
-				d = &Dispatcher{}
-			} else {
-				d, err = NewDispatcher(*tt.dispatcherConfig)
-				assert.NoError(t, err)
-			}
-			response := d.Do(tt.input)
-
+			response := dispatcher.Do(tt.input)
 			errResponse, ok := response.(*fiber.ErrorResponse)
 			if ok {
-				log.Print(string(errResponse.Payload().([]byte)))
-				assert.EqualValues(t, tt.expected, errResponse, string(errResponse.Payload().([]byte)))
+				assert.EqualValues(t, tt.expected, errResponse)
 			} else {
 				grpcResponse, ok := response.(*Response)
 				if !ok {
 					assert.FailNow(t, "Fail to type assert response")
 				}
-
-				assert.EqualValues(t, tt.expected.StatusCode(), grpcResponse.StatusCode())
-				assert.EqualValues(t, tt.expected.BackendName(), grpcResponse.BackendName())
-				assert.EqualValues(t, tt.expected.IsSuccess(), grpcResponse.IsSuccess())
-				expectedPayload, ok := tt.expected.Payload().(proto.Message)
+				require.EqualValues(t, tt.expected.StatusCode(), grpcResponse.StatusCode())
+				require.EqualValues(t, tt.expected.BackendName(), grpcResponse.BackendName())
+				require.EqualValues(t, tt.expected.IsSuccess(), grpcResponse.IsSuccess())
+				payload, ok := grpcResponse.Payload().([]byte)
 				if !ok {
 					assert.FailNow(t, "Fail to type assert response payload")
 				}
-				actualPayload, ok := grpcResponse.Payload().(proto.Message)
-				if !ok {
-					assert.FailNow(t, "Fail to type assert response")
-				}
-				assert.True(t, proto.Equal(expectedPayload, actualPayload), "actual payload doesn't equate expected")
+				responseProto := &testproto.PredictValuesResponse{}
+				err = proto.Unmarshal(payload, responseProto)
+				require.NoError(t, err)
+				assert.True(t, proto.Equal(mockResponse, responseProto), "actual proto response don't match expected")
 			}
 		})
 	}

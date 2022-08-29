@@ -120,7 +120,7 @@ var (
 		}
 		return &FiberError{
 			Code:    statusCode,
-			Message: fmt.Sprintf("fiber: bad request: %s", err.Error()),
+			Message: fmt.Sprintf("fiber: %s", err.Error()),
 		}
 	}
 )

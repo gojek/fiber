@@ -24,7 +24,6 @@ func TestRequest_Clone(t *testing.T) {
 			req: &Request{
 				Metadata:       metadata.New(map[string]string{"test": "1"}),
 				RequestPayload: &testproto.PredictValuesRequest{},
-				ResponseProto:  nil,
 			},
 		},
 	}
@@ -113,11 +112,10 @@ func TestRequest_Protocol(t *testing.T) {
 func TestRequest_Transform(t *testing.T) {
 
 	tests := []struct {
-		name        string
-		req         Request
-		backend     fiber.Backend
-		expected    Request
-		expectedErr string
+		name     string
+		req      Request
+		backend  fiber.Backend
+		expected Request
 	}{
 		{
 			name:     "",

@@ -12,11 +12,16 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-type grpcServer struct {
-	Port int
+type GrpcTestServer struct {
+	Port         int
+	MockResponse *testproto.PredictValuesResponse
 }
 
-func (s *grpcServer) PredictValues(ctx context.Context, request *testproto.PredictValuesRequest) (*testproto.PredictValuesResponse, error) {
+func (s *GrpcTestServer) PredictValues(_ context.Context, _ *testproto.PredictValuesRequest) (*testproto.PredictValuesResponse, error) {
+	if s.MockResponse != nil {
+		log.Println("response = " + s.MockResponse.String())
+		return s.MockResponse, nil
+	}
 	return &testproto.PredictValuesResponse{
 		Metadata: &testproto.ResponseMetadata{
 			PredictionId: "123",
@@ -25,15 +30,15 @@ func (s *grpcServer) PredictValues(ctx context.Context, request *testproto.Predi
 	}, nil
 }
 
-func RunTestUPIServer(port int) {
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+func RunTestUPIServer(srv GrpcTestServer) {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", srv.Port))
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 	s := grpc.NewServer()
-	testproto.RegisterUniversalPredictionServiceServer(s, &grpcServer{port})
+	testproto.RegisterUniversalPredictionServiceServer(s, &srv)
 	reflection.Register(s)
-	log.Printf("Running Test Server at %v", port)
+	log.Printf("Running Test Server at %v", srv.Port)
 	go func() {
 		if err := s.Serve(listener); err != nil {
 			log.Fatalf("failed to serve: %v", err)

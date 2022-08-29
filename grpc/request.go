@@ -12,9 +12,6 @@ type Request struct {
 	// RequestPayload is the grpc request
 	RequestPayload proto.Message
 	// RequestPayload is the grpc expected response type
-
-	// ResponseProto is the proto return type of the service.
-	ResponseProto proto.Message
 }
 
 func (r *Request) Protocol() string {
@@ -33,7 +30,6 @@ func (r *Request) Clone() (fiber.Request, error) {
 	return &Request{
 		Metadata:       r.Metadata,
 		RequestPayload: r.RequestPayload,
-		ResponseProto:  r.ResponseProto,
 	}, nil
 }
 

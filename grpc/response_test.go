@@ -4,8 +4,10 @@ import (
 	"log"
 	"testing"
 
+	"github.com/gojek/fiber"
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -80,6 +82,10 @@ func TestResponse_Payload(t *testing.T) {
 		},
 		Metadata: nil,
 	}
+	byteResponse, err := proto.Marshal(response)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
 	tests := []struct {
 		name     string
 		req      Response
@@ -88,18 +94,18 @@ func TestResponse_Payload(t *testing.T) {
 		{
 			name: "",
 			req: Response{
-				ResponsePayload: response,
+				CachedPayload: fiber.NewCachedPayload(byteResponse),
 			},
 			expected: proto.Clone(response),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			response := &testproto.PredictValuesRequest{}
+			err := proto.Unmarshal(tt.req.Payload().([]byte), response)
+			require.NoError(t, err)
 			assert.True(t,
-				proto.Equal(
-					tt.expected.(proto.Message),
-					tt.req.Payload().(proto.Message),
-				), "payload not equal to expected")
+				proto.Equal(tt.expected.(proto.Message), response), "actual payload not equal to expected")
 		})
 	}
 }

@@ -167,28 +167,31 @@ func (c *CombinerConfig) initComponent() (fiber.Component, error) {
 // ProxyConfig is used to parse the configuration for a Proxy
 type ProxyConfig struct {
 	ComponentConfig
-	Endpoint      string   `json:"endpoint" required:"true"`
-	Timeout       Duration `json:"timeout"`
-	Protocol      string   `json:"protocol"`
-	ServiceMethod string   `json:"serviceMethod"`
+	Endpoint          string   `json:"endpoint" required:"true"`
+	Timeout           Duration `json:"timeout"`
+	Protocol          string   `json:"protocol"`
+	Service           string   `json:"service"`
+	Method            string   `json:"method"`
+	ResponseProtoName string   `json:"responseProtoName"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 
 	var dispatcher fiber.Dispatcher
 	var err error
+	var backend fiber.Backend
 	if strings.EqualFold(c.Protocol, fiber.GRPC) {
-		//TODO response proto cant be parse from yaml simply, to use server reflection and fetch proto dynamically
 		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
-			ServiceMethod: c.ServiceMethod,
-			Endpoint:      c.Endpoint,
-			//DialOption:    nil,
-			Timeout: time.Duration(c.Timeout),
-			//ResponseProto: nil,
+			Service:           c.Service,
+			Method:            c.Method,
+			Endpoint:          c.Endpoint,
+			Timeout:           time.Duration(c.Timeout),
+			ResponseProtoName: c.ResponseProtoName,
 		})
 	} else {
 		httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}
 		dispatcher, err = fiberHTTP.NewDispatcher(httpClient)
+		backend = fiber.NewBackend(c.ID, c.Endpoint)
 	}
 	if err != nil {
 		return nil, err
@@ -197,7 +200,7 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	if err != nil {
 		return nil, err
 	}
-	backend := fiber.NewBackend(c.ID, c.Endpoint)
+
 	return fiber.NewProxy(backend, caller), nil
 }
 
