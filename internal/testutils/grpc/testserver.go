@@ -19,7 +19,6 @@ type GrpcTestServer struct {
 
 func (s *GrpcTestServer) PredictValues(_ context.Context, _ *testproto.PredictValuesRequest) (*testproto.PredictValuesResponse, error) {
 	if s.MockResponse != nil {
-		log.Println("response = " + s.MockResponse.String())
 		return s.MockResponse, nil
 	}
 	return &testproto.PredictValuesResponse{

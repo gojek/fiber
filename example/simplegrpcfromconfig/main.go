@@ -65,10 +65,6 @@ func main() {
 			if err != nil {
 				log.Fatalf("fail to unmarshal to proto")
 			}
-
-			if !ok {
-				log.Fatalf("fail to convert response to proto")
-			}
 			log.Print(responseProto.String())
 		} else {
 			log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
