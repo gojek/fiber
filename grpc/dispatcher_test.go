@@ -25,10 +25,9 @@ import (
 )
 
 const (
-	port              = 50055
-	service           = "testproto.UniversalPredictionService"
-	method            = "PredictValues"
-	responseProtoName = "PredictValuesResponse"
+	port    = 50055
+	service = "testproto.UniversalPredictionService"
+	method  = "PredictValues"
 )
 
 var mockResponse *testproto.PredictValuesResponse
@@ -92,9 +91,8 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "empty endpoint",
 			dispatcherConfig: DispatcherConfig{
-				Service:           service,
-				Method:            method,
-				ResponseProtoName: responseProtoName,
+				Service: service,
+				Method:  method,
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
@@ -104,9 +102,8 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "empty service",
 			dispatcherConfig: DispatcherConfig{
-				Method:            method,
-				ResponseProtoName: responseProtoName,
-				Endpoint:          fmt.Sprintf(":%d", port),
+				Method:   method,
+				Endpoint: fmt.Sprintf(":%d", port),
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
@@ -116,20 +113,7 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "empty method",
 			dispatcherConfig: DispatcherConfig{
-				Service:           service,
-				ResponseProtoName: responseProtoName,
-				Endpoint:          fmt.Sprintf(":%d", port),
-			},
-			expected: nil,
-			expectedErr: fiberError.ErrInvalidInput(
-				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
-		},
-		{
-			name: "empty proto",
-			dispatcherConfig: DispatcherConfig{
 				Service:  service,
-				Method:   method,
 				Endpoint: fmt.Sprintf(":%d", port),
 			},
 			expected: nil,
@@ -140,10 +124,9 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "invalid endpoint",
 			dispatcherConfig: DispatcherConfig{
-				Service:           service,
-				Method:            method,
-				Endpoint:          ":1",
-				ResponseProtoName: responseProtoName,
+				Service:  service,
+				Method:   method,
+				Endpoint: ":1",
 			},
 			expected: nil,
 			expectedErr: fiberError.NewFiberError(
@@ -153,31 +136,29 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "invalid response",
 			dispatcherConfig: DispatcherConfig{
-				Service:           service,
-				Method:            method,
-				Endpoint:          fmt.Sprintf(":%d", port),
-				ResponseProtoName: "non existent proto",
+				Service:  service,
+				Method:   "fake method",
+				Endpoint: fmt.Sprintf(":%d", port),
 			},
 			expected: nil,
 			expectedErr: fiberError.NewFiberError(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: unable to find proto in registry")),
+				errors.New("grpc dispatcher: unable to fetch file descriptors, ensure config are correct")),
 		},
 		{
 			name: "ok response",
 			dispatcherConfig: DispatcherConfig{
-				Service:           service,
-				Method:            method,
-				Endpoint:          fmt.Sprintf(":%d", port),
-				ResponseProtoName: responseProtoName,
-				Timeout:           time.Second * 5,
+				Service:  service,
+				Method:   method,
+				Endpoint: fmt.Sprintf(":%d", port),
+				Timeout:  time.Second * 5,
 			},
 			expected: &Dispatcher{
 				timeout:       time.Second * 5,
 				serviceMethod: fmt.Sprintf("%s/%s", service, method),
 				endpoint:      fmt.Sprintf(":%d", port),
 			},
-			expectedProtoName: responseProtoName,
+			expectedProtoName: "PredictValuesResponse",
 		},
 	}
 
@@ -206,11 +187,10 @@ func TestNewDispatcher(t *testing.T) {
 
 func TestDispatcher_Do(t *testing.T) {
 	dispatcherConfig := DispatcherConfig{
-		Service:           service,
-		Method:            method,
-		Endpoint:          fmt.Sprintf(":%d", port),
-		ResponseProtoName: responseProtoName,
-		Timeout:           time.Second * 5,
+		Service:  service,
+		Method:   method,
+		Endpoint: fmt.Sprintf(":%d", port),
+		Timeout:  time.Second * 5,
 	}
 	dispatcher, err := NewDispatcher(dispatcherConfig)
 	require.NoError(t, err, "unable to create dispatcher")

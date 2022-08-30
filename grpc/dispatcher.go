@@ -41,11 +41,10 @@ type Dispatcher struct {
 }
 
 type DispatcherConfig struct {
-	Service           string
-	Method            string
-	Endpoint          string
-	Timeout           time.Duration
-	ResponseProtoName string
+	Service  string
+	Method   string
+	Endpoint string
+	Timeout  time.Duration
 }
 
 func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
@@ -95,7 +94,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 		configuredTimeout = config.Timeout
 	}
 
-	if config.Endpoint == "" || config.Service == "" || config.Method == "" || config.ResponseProtoName == "" {
+	if config.Endpoint == "" || config.Service == "" || config.Method == "" {
 		return nil, fiberError.ErrInvalidInput(
 			protocol.GRPC,
 			errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)"))
@@ -131,35 +130,49 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 		return nil, fiberError.NewFiberError(protocol.GRPC, err)
 	}
 
-	// From the FileDescriptorProtos, find the proto matching config proto name
-	var fileDescriptorProtos []*descriptorpb.FileDescriptorProto
-	for _, fdBytes := range reflectionResponse.GetFileDescriptorResponse().FileDescriptorProto {
+	var fileDescriptorProto *descriptorpb.FileDescriptorProto
+	var outputProtoName string
 
-		fd := &descriptorpb.FileDescriptorProto{}
-		if err := proto.Unmarshal(fdBytes, fd); err != nil {
+out:
+	for _, fdpBytes := range reflectionResponse.GetFileDescriptorResponse().FileDescriptorProto {
+
+		fdp := &descriptorpb.FileDescriptorProto{}
+		if err := proto.Unmarshal(fdpBytes, fdp); err != nil {
 			return nil, fiberError.NewFiberError(protocol.GRPC, err)
 		}
-		fileDescriptorProtos = append(fileDescriptorProtos, fd)
-	}
-	var fdProto *descriptorpb.FileDescriptorProto
-	for _, fd := range fileDescriptorProtos {
-		for _, md := range fd.MessageType {
-			if strings.Contains(*md.Name, config.ResponseProtoName) {
-				fdProto = fd
-				break
+
+		for _, service := range fdp.Service {
+			// find matching service descriptors from file descriptor
+			if config.Service == fmt.Sprintf("%s.%s", fdp.GetPackage(), service.GetName()) {
+				// find matching method from service descriptor
+				for _, method := range service.Method {
+					if method.GetName() == config.Method {
+						outputType := method.GetOutputType()
+						//Get the proto name without package
+						outputProtoName = outputType[strings.LastIndex(outputType, ".")+1:]
+						fileDescriptorProto = fdp
+						break out
+					}
+				}
 			}
 		}
 	}
 
+	if fileDescriptorProto == nil {
+		return nil, fiberError.NewFiberError(
+			protocol.GRPC,
+			errors.New("grpc dispatcher: unable to fetch file descriptors, ensure config are correct"))
+	}
+
 	// Create a FileDescriptor from FileDescriptorProto, and get MessageDescriptor to create a dynamic message
 	// Note: It might be required to register new proto using protoregistry.Files.RegisterFile() at runtime
-	fileDescriptor, err := protodesc.NewFile(fdProto, protoregistry.GlobalFiles)
+	fileDescriptor, err := protodesc.NewFile(fileDescriptorProto, protoregistry.GlobalFiles)
 	if err != nil {
 		return nil, fiberError.NewFiberError(
 			protocol.GRPC,
 			errors.New("grpc dispatcher: unable to find proto in registry"))
 	}
-	messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(config.ResponseProtoName))
+	messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(outputProtoName))
 
 	dispatcher := &Dispatcher{
 		timeout:       configuredTimeout,

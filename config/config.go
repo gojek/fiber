@@ -183,11 +183,10 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	var backend fiber.Backend
 	if strings.EqualFold(c.Protocol, string(protocol.GRPC)) {
 		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
-			Service:           c.Service,
-			Method:            c.Method,
-			Endpoint:          c.Endpoint,
-			Timeout:           time.Duration(c.Timeout),
-			ResponseProtoName: c.ResponseProtoName,
+			Service:  c.Service,
+			Method:   c.Method,
+			Endpoint: c.Endpoint,
+			Timeout:  time.Duration(c.Timeout),
 		})
 	} else {
 		httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}

@@ -231,40 +231,42 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 	}
 
 	for _, tt := range suite {
-		router := fiber.NewEagerRouter("eager-router")
-		router.SetRoutes(tt.Routes())
+		t.Run(tt.name, func(t *testing.T) {
+			router := fiber.NewEagerRouter("eager-router")
+			router.SetRoutes(tt.Routes())
 
-		strategy := testutils.NewMockRoutingStrategy(
-			tt.Routes(),
-			tt.strategy,
-			tt.strategyLatency,
-			tt.strategyException)
-		router.SetStrategy(strategy)
+			strategy := testutils.NewMockRoutingStrategy(
+				tt.Routes(),
+				tt.strategy,
+				tt.strategyLatency,
+				tt.strategyException)
+			router.SetStrategy(strategy)
 
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
-		received := make([]fiber.Response, 0)
-		request := testUtilsHttp.MockReq("GET", "http://test:8080", "")
-		for responsesCh := router.Dispatch(ctx, request).Iter(); ; {
-			select {
-			case resp, ok := <-responsesCh:
-				if ok {
-					received = append(received, resp)
-					continue
+			received := make([]fiber.Response, 0)
+			request := testUtilsHttp.MockReq("GET", "http://test:8080", "")
+			for responsesCh := router.Dispatch(ctx, request).Iter(); ; {
+				select {
+				case resp, ok := <-responsesCh:
+					if ok {
+						received = append(received, resp)
+						continue
+					}
+				case <-time.After(timeout + timeout/2):
+					assert.Fail(t, fmt.Sprintf("[%s] failed: it didn't terminate after a timeout...", tt.name))
 				}
-			case <-time.After(timeout + timeout/2):
-				assert.Fail(t, fmt.Sprintf("[%s] failed: it didn't terminate after a timeout...", tt.name))
+
+				cancel()
+				break
 			}
 
-			cancel()
-			break
-		}
-
-		assert.Equal(t, len(tt.expected), len(received), tt.name)
-		for i := 0; i < len(tt.expected); i++ {
-			assert.Equal(t, string(tt.expected[i].Payload().([]byte)), string(received[i].Payload().([]byte)), tt.name)
-			assert.Equal(t, tt.expected[i].StatusCode(), received[i].StatusCode(), tt.name)
-		}
-		strategy.AssertExpectations(t)
+			assert.Equal(t, len(tt.expected), len(received), tt.name)
+			for i := 0; i < len(tt.expected); i++ {
+				assert.Equal(t, string(tt.expected[i].Payload().([]byte)), string(received[i].Payload().([]byte)), tt.name)
+				assert.Equal(t, tt.expected[i].StatusCode(), received[i].StatusCode(), tt.name)
+			}
+			strategy.AssertExpectations(t)
+		})
 	}
 }
