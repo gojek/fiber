@@ -168,12 +168,11 @@ func (c *CombinerConfig) initComponent() (fiber.Component, error) {
 // ProxyConfig is used to parse the configuration for a Proxy
 type ProxyConfig struct {
 	ComponentConfig
-	Endpoint          string   `json:"endpoint" required:"true"`
-	Timeout           Duration `json:"timeout"`
-	Protocol          string   `json:"protocol"`
-	Service           string   `json:"service"`
-	Method            string   `json:"method"`
-	ResponseProtoName string   `json:"responseProtoName"`
+	Endpoint string   `json:"endpoint" required:"true"`
+	Timeout  Duration `json:"timeout"`
+	Protocol string   `json:"protocol"`
+	Service  string   `json:"service"`
+	Method   string   `json:"method"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {

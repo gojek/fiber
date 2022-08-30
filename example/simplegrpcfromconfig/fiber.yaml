@@ -9,7 +9,6 @@ routes:
     endpoint: "localhost:50555"
     service: "testproto.UniversalPredictionService"
     method: "PredictValues"
-    responseProtoName: "PredictValuesResponse"
     protocol: "grpc"
   - id: route_b
     type: PROXY
@@ -17,5 +16,4 @@ routes:
     endpoint: "localhost:50556"
     service: "testproto.UniversalPredictionService"
     method: "PredictValues"
-    responseProtoName: "PredictValuesResponse"
     protocol: "grpc"
