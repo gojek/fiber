@@ -22,7 +22,8 @@ func TestSimpleHttpFromConfig(t *testing.T) {
 	responseBody := []byte(`test`)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write(responseBody)
+		_, err := w.Write(responseBody)
+		require.NoError(t, err, "fail to write to body")
 	})
 	go func() {
 		err := http.ListenAndServe(":5000", handler)
@@ -33,8 +34,10 @@ func TestSimpleHttpFromConfig(t *testing.T) {
 	httpReq, err := http.NewRequest(
 		http.MethodGet, "",
 		ioutil.NopCloser(bytes.NewReader([]byte{})))
+	require.NoError(t, err)
 
 	req, err := fiberhttp.NewHTTPRequest(httpReq)
+	require.NoError(t, err)
 
 	// initialize root-level fiber component from the config
 	component, err := config.InitComponentFromConfig("./fiberhttp.yaml")
