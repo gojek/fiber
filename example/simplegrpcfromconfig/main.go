@@ -34,7 +34,7 @@ func main() {
 	}
 
 	var req = &grpc.Request{
-		RequestPayload: &testproto.PredictValuesRequest{
+		Message: &testproto.PredictValuesRequest{
 			PredictionRows: []*testproto.PredictionRow{
 				{
 					RowId: "1",
@@ -49,8 +49,19 @@ func main() {
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
 		if resp.StatusCode() == int(codes.OK) {
+			log.Print(resp.Payload())
+
+			//values can be retrieved using protoReflect or marshalled into proto
+			payload, ok := resp.Payload().(proto.Message)
+			if !ok {
+				log.Fatalf("fail to convert response to proto")
+			}
+			payloadByte, err := proto.Marshal(payload)
+			if err != nil {
+				log.Fatalf("fail to marshal to proto")
+			}
 			responseProto := &testproto.PredictValuesResponse{}
-			err := proto.Unmarshal(resp.Payload().([]byte), responseProto)
+			err = proto.Unmarshal(payloadByte, responseProto)
 			if err != nil {
 				log.Fatalf("fail to unmarshal to proto")
 			}

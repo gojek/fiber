@@ -10,9 +10,7 @@ import (
 type Request struct {
 	// Metadata will hold the grpc headers for request
 	Metadata metadata.MD
-	// RequestPayload is the grpc request
-	RequestPayload proto.Message
-	// RequestPayload is the grpc expected response type
+	Message  proto.Message
 }
 
 func (r *Request) Protocol() protocol.Protocol {
@@ -20,7 +18,7 @@ func (r *Request) Protocol() protocol.Protocol {
 }
 
 func (r *Request) Payload() interface{} {
-	return r.RequestPayload
+	return r.Message
 }
 
 func (r *Request) Header() map[string][]string {
@@ -29,8 +27,8 @@ func (r *Request) Header() map[string][]string {
 
 func (r *Request) Clone() (fiber.Request, error) {
 	return &Request{
-		Metadata:       r.Metadata,
-		RequestPayload: r.RequestPayload,
+		Metadata: r.Metadata,
+		Message:  r.Message,
 	}, nil
 }
 

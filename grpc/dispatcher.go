@@ -74,15 +74,10 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 			})
 	}
 
-	responseByte, err := proto.Marshal(responseProto)
-	if err != nil {
-		return fiber.NewErrorResponse(err)
-	}
-
 	return &Response{
-		Metadata:      responseHeader,
-		Status:        *status.New(codes.OK, "Success"),
-		CachedPayload: fiber.NewCachedPayload(responseByte),
+		Metadata: responseHeader,
+		Message:  responseProto,
+		Status:   *status.New(codes.OK, "Success"),
 	}
 }
 

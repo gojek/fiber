@@ -23,8 +23,8 @@ func TestRequest_Clone(t *testing.T) {
 		{
 			name: "simple",
 			req: &Request{
-				Metadata:       metadata.New(map[string]string{"test": "1"}),
-				RequestPayload: &testproto.PredictValuesRequest{},
+				Metadata: metadata.New(map[string]string{"test": "1"}),
+				Message:  &testproto.PredictValuesRequest{},
 			},
 		},
 	}
@@ -92,7 +92,7 @@ func TestRequest_Payload(t *testing.T) {
 		{
 			name: "ok payload",
 			req: Request{
-				RequestPayload: &testproto.PredictValuesResponse{},
+				Message: &testproto.PredictValuesResponse{},
 			},
 			want: &testproto.PredictValuesResponse{},
 		},

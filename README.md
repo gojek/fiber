@@ -7,6 +7,9 @@ Core components of fiber are transport agnostic, however, there is
 Go's `net/http`-based implementation provided in [fiber/http](http) package 
 and a grpc implementation using server reflection in [fiber/grpc](grpc).
 
+The grpc implementation will return a [dynamicpb message](https://pkg.go.dev/google.golang.org/protobuf/types/dynamicpb) 
+and it is expected that the client [marshal](https://pkg.go.dev/github.com/golang/protobuf/proto#Marshal) the message and unmarshall into the intended proto response.
+
 ## Usage
 
 ```go

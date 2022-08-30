@@ -213,7 +213,7 @@ func TestDispatcher_Do(t *testing.T) {
 		{
 			name: "success",
 			input: &Request{
-				RequestPayload: &testproto.PredictValuesRequest{}},
+				Message: &testproto.PredictValuesRequest{}},
 			expected: &Response{
 				Metadata: metadata.New(map[string]string{
 					"content-type": "application/grpc",
@@ -237,12 +237,14 @@ func TestDispatcher_Do(t *testing.T) {
 				require.EqualValues(t, tt.expected.StatusCode(), grpcResponse.StatusCode())
 				require.EqualValues(t, tt.expected.BackendName(), grpcResponse.BackendName())
 				require.EqualValues(t, tt.expected.IsSuccess(), grpcResponse.IsSuccess())
-				payload, ok := grpcResponse.Payload().([]byte)
+				payload, ok := grpcResponse.Payload().(proto.Message)
 				if !ok {
 					assert.FailNow(t, "Fail to type assert response payload")
 				}
+				payloadByte, err := proto.Marshal(payload)
+				require.NoError(t, err, "unable to marshal payload")
 				responseProto := &testproto.PredictValuesResponse{}
-				err = proto.Unmarshal(payload, responseProto)
+				err = proto.Unmarshal(payloadByte, responseProto)
 				require.NoError(t, err)
 				assert.True(t, proto.Equal(mockResponse, responseProto), "actual proto response don't match expected")
 			}
