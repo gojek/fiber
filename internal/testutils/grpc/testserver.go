@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"google.golang.org/grpc"
@@ -15,12 +16,16 @@ import (
 type GrpcTestServer struct {
 	Port         int
 	MockResponse *testproto.PredictValuesResponse
+	DelayTimer   time.Duration
 }
 
 func (s *GrpcTestServer) PredictValues(_ context.Context, _ *testproto.PredictValuesRequest) (*testproto.PredictValuesResponse, error) {
+	time.Sleep(s.DelayTimer)
+
 	if s.MockResponse != nil {
 		return s.MockResponse, nil
 	}
+
 	return &testproto.PredictValuesResponse{
 		Metadata: &testproto.ResponseMetadata{
 			PredictionId: "123",

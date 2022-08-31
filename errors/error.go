@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// FiberError is used to capture the error resulting from a HTTP request
+// FiberError is used to capture the error resulting from a Fiber request
 type FiberError struct {
 	Code    int    `json:"code"`
 	Message string `json:"error"`
@@ -88,7 +88,7 @@ var (
 		}
 	}
 
-	// ErrReadRequestFailed is a FiberError that's returned when a http request cannot
+	// ErrReadRequestFailed is a FiberError that's returned when a request cannot
 	// be read successfully
 	ErrReadRequestFailed = func(protocol protocol.Protocol, err error) *FiberError {
 		statusCode := http.StatusInternalServerError

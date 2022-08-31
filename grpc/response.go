@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"google.golang.org/grpc/codes"
 	"strings"
 
 	"github.com/gojek/fiber"
@@ -16,7 +17,7 @@ type Response struct {
 }
 
 func (r *Response) IsSuccess() bool {
-	return r.StatusCode() == 0
+	return r.StatusCode() == int(codes.OK)
 }
 
 func (r *Response) Payload() interface{} {
