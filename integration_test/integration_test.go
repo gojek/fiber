@@ -138,33 +138,22 @@ func TestE2EFromConfig(t *testing.T) {
 	httpRequest, err := fiberhttp.NewHTTPRequest(httpReq)
 	require.NoError(t, err)
 
-	//Set up the router. route 1 and 2 are working fine, route 3 will always timeout.
-	grpcComponent, err := config.InitComponentFromConfig("./fibergrpc.yaml")
-	require.NoError(t, err)
-	grpcRouter, ok := grpcComponent.(*fiber.EagerRouter)
-	require.True(t, ok)
-
-	httpComponent, err := config.InitComponentFromConfig("./fiberhttp.yaml")
-	require.NoError(t, err)
-	httpRouter, ok := httpComponent.(*fiber.EagerRouter)
-	require.True(t, ok)
-
 	route1 := "route1"
 	route2 := "route2"
 	route3 := "route3"
 
 	tests := []struct {
 		name                 string
-		router               *fiber.EagerRouter
 		routesOrder          []string
 		request              fiber.Request
 		expectedMessageProto *testproto.PredictValuesResponse
 		expectedFiberErr     fiber.Response
 		expectedResponse     fiber.Response
+		configPath           string
 	}{
 		{
 			name:                 "grpc route 1",
-			router:               grpcRouter,
+			configPath:           "./fibergrpc.yaml",
 			routesOrder:          []string{route1, route2, route3},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse1,
@@ -174,7 +163,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:        "http route 1",
-			router:      httpRouter,
+			configPath:  "./fiberhttp.yaml",
 			routesOrder: []string{route1, route2, route3},
 			request:     httpRequest,
 			expectedResponse: fiberhttp.NewHTTPResponse(
@@ -186,7 +175,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:                 "grpc route 2",
-			router:               grpcRouter,
+			configPath:           "./fibergrpc.yaml",
 			routesOrder:          []string{route2, route1, route3},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse2,
@@ -196,7 +185,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:        "http route 2",
-			router:      httpRouter,
+			configPath:  "./fiberhttp.yaml",
 			routesOrder: []string{route2, route1, route3},
 			request:     httpRequest,
 			expectedResponse: fiberhttp.NewHTTPResponse(
@@ -208,7 +197,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:                 "grpc route3 timeout, route 1 fallback returned",
-			router:               grpcRouter,
+			configPath:           "./fibergrpc.yaml",
 			routesOrder:          []string{route3, route1, route2},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse1,
@@ -218,7 +207,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:        "http route3 timeout, route 1 fallback returned",
-			router:      httpRouter,
+			configPath:  "./fiberhttp.yaml",
 			routesOrder: []string{route3, route1, route2},
 			request:     httpRequest,
 			expectedResponse: fiberhttp.NewHTTPResponse(
@@ -230,7 +219,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:                 "grpc route3 timeout, route 2 fallback returned",
-			router:               grpcRouter,
+			configPath:           "./fibergrpc.yaml",
 			routesOrder:          []string{route3, route2, route1},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse2,
@@ -240,7 +229,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:        "http route3 timeout, route 2 fallback returned",
-			router:      httpRouter,
+			configPath:  "./fiberhttp.yaml",
 			routesOrder: []string{route3, route2, route1},
 			request:     httpRequest,
 			expectedResponse: fiberhttp.NewHTTPResponse(
@@ -252,7 +241,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:        "grpc route3 timeout",
-			router:      grpcRouter,
+			configPath:  "./fibergrpc.yaml",
 			routesOrder: []string{route3},
 			request:     grpcRequest,
 			expectedResponse: &grpc.Response{
@@ -262,7 +251,7 @@ func TestE2EFromConfig(t *testing.T) {
 		},
 		{
 			name:             "http route3 timeout",
-			router:           httpRouter,
+			configPath:       "./fiberhttp.yaml",
 			routesOrder:      []string{route3},
 			request:          httpRequest,
 			expectedFiberErr: fiber.NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.HTTP)),
@@ -273,16 +262,21 @@ func TestE2EFromConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			component, err := config.InitComponentFromConfig(tt.configPath)
+			require.NoError(t, err)
+			router, ok := component.(*fiber.EagerRouter)
+			require.True(t, ok)
+
 			// Orchestrate route order with mock strategy to fix the order of routes for testing
 			strategy := testutils.NewMockRoutingStrategy(
-				tt.router.GetRoutes(),
+				router.GetRoutes(),
 				tt.routesOrder,
 				0,
 				nil,
 			)
-			tt.router.SetStrategy(strategy)
+			router.SetStrategy(strategy)
 
-			resp, ok := <-tt.router.Dispatch(context.Background(), tt.request).Iter()
+			resp, ok := <-router.Dispatch(context.Background(), tt.request).Iter()
 			require.True(t, ok)
 
 			if tt.expectedFiberErr != nil {
