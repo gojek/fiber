@@ -1,10 +1,10 @@
 package grpc
 
 import (
-	"google.golang.org/grpc/codes"
 	"strings"
 
 	"github.com/gojek/fiber"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"

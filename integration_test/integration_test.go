@@ -3,8 +3,6 @@ package integration_test
 import (
 	"bytes"
 	"context"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 	"io"
 	"io/ioutil"
 	"log"
@@ -25,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 var (
