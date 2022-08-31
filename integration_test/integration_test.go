@@ -3,6 +3,9 @@ package integration_test
 import (
 	"bytes"
 	"context"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -22,14 +25,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/proto"
 )
 
 var (
 	httpResponse1 = []byte(`response 1`)
 	httpResponse2 = []byte(`response 2`)
+	httpResponse3 = []byte(`response 3`)
 	httpAddr1     = ":5000"
 	httpAddr2     = ":5001"
+	httpAddr3     = ":5002"
 
 	grpcPort1     = 50555
 	grpcPort2     = 50556
@@ -75,8 +79,9 @@ var (
 
 func TestMain(m *testing.M) {
 	// Set up three http and grpc server with fix response for test
-	runTestHttpServer(httpAddr1, httpResponse1)
-	runTestHttpServer(httpAddr2, httpResponse2)
+	runTestHttpServer(httpAddr1, httpResponse1, 0)
+	runTestHttpServer(httpAddr2, httpResponse2, 0)
+	runTestHttpServer(httpAddr3, httpResponse3, 10)
 
 	// Third routes will be set to timeout intentionally
 	runTestGrpcServer(grpcPort1, grpcResponse1, 0)
@@ -86,10 +91,10 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func runTestHttpServer(addr string, responseBody []byte) {
+func runTestHttpServer(addr string, responseBody []byte, delayDuration int) {
 	// Create test server
-	//responseBody1 := []byte(`response 1`)
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(time.Second * time.Duration(delayDuration))
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write(responseBody)
 		if err != nil {
@@ -112,31 +117,8 @@ func runTestGrpcServer(port int, response *testproto.PredictValuesResponse, dela
 	})
 }
 
-func TestSimpleHttpFromConfig(t *testing.T) {
-
-	//Generate http request
-	httpReq, err := http.NewRequest(
-		http.MethodGet, "",
-		ioutil.NopCloser(bytes.NewReader([]byte{})))
-	require.NoError(t, err)
-
-	req, err := fiberhttp.NewHTTPRequest(httpReq)
-	require.NoError(t, err)
-
-	// initialize root-level fiber component from the config
-	component, err := config.InitComponentFromConfig("./fiberhttp.yaml")
-	require.NoError(t, err)
-
-	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
-	require.True(t, ok)
-	require.Equal(t, resp.StatusCode(), http.StatusOK)
-	respByte, ok := resp.Payload().([]byte)
-	require.True(t, ok)
-	require.Equal(t, respByte, httpResponse1)
-}
-
-func TestSimpleGrpcFromConfig(t *testing.T) {
-	req := &grpc.Request{
+func TestE2EFromConfig(t *testing.T) {
+	grpcRequest := &grpc.Request{
 		Message: &testproto.PredictValuesRequest{
 			PredictionRows: []*testproto.PredictionRow{
 				{
@@ -149,88 +131,183 @@ func TestSimpleGrpcFromConfig(t *testing.T) {
 		},
 	}
 
-	//Set up the router. route 1 and 2 are working fine, route 3 will always timeout.
-	component, err := config.InitComponentFromConfig("./fibergrpc.yaml")
+	httpReq, err := http.NewRequest(
+		http.MethodGet, "",
+		ioutil.NopCloser(bytes.NewReader([]byte{})))
 	require.NoError(t, err)
-	router, ok := component.(*fiber.EagerRouter)
+	httpRequest, err := fiberhttp.NewHTTPRequest(httpReq)
+	require.NoError(t, err)
+
+	//Set up the router. route 1 and 2 are working fine, route 3 will always timeout.
+	grpcComponent, err := config.InitComponentFromConfig("./fibergrpc.yaml")
+	require.NoError(t, err)
+	grpcRouter, ok := grpcComponent.(*fiber.EagerRouter)
 	require.True(t, ok)
-	route1 := "route_a"
-	route2 := "route_b"
-	route3 := "route_c"
+
+	httpComponent, err := config.InitComponentFromConfig("./fiberhttp.yaml")
+	require.NoError(t, err)
+	httpRouter, ok := httpComponent.(*fiber.EagerRouter)
+	require.True(t, ok)
+
+	route1 := "route1"
+	route2 := "route2"
+	route3 := "route3"
 
 	tests := []struct {
-		name                    string
-		routesOrder             []string
-		expectedResponseMessage *testproto.PredictValuesResponse
-		expectedFiberErr        fiber.Response
-		expectedStatus          int
+		name                 string
+		router               *fiber.EagerRouter
+		routesOrder          []string
+		request              fiber.Request
+		expectedMessageProto *testproto.PredictValuesResponse
+		expectedFiberErr     fiber.Response
+		expectedResponse     fiber.Response
 	}{
 		{
-			name:                    "route 1",
-			routesOrder:             []string{route1, route2, route3},
-			expectedStatus:          int(codes.OK),
-			expectedResponseMessage: grpcResponse1,
+			name:                 "grpc route 1",
+			router:               grpcRouter,
+			routesOrder:          []string{route1, route2, route3},
+			request:              grpcRequest,
+			expectedMessageProto: grpcResponse1,
+			expectedResponse: &grpc.Response{
+				Status: *status.New(codes.OK, "Success"),
+			},
 		},
 		{
-			name:                    "route 2",
-			routesOrder:             []string{route2, route1, route3},
-			expectedStatus:          int(codes.OK),
-			expectedResponseMessage: grpcResponse2,
+			name:        "http route 1",
+			router:      httpRouter,
+			routesOrder: []string{route1, route2, route3},
+			request:     httpRequest,
+			expectedResponse: fiberhttp.NewHTTPResponse(
+				&http.Response{
+					StatusCode: http.StatusOK,
+					Body:       makeBody(httpResponse1),
+				},
+			),
 		},
 		{
-			name:                    "route3 timeout, route 1 fallback returned",
-			routesOrder:             []string{route3, route1, route2},
-			expectedStatus:          int(codes.OK),
-			expectedResponseMessage: grpcResponse1,
+			name:                 "grpc route 2",
+			router:               grpcRouter,
+			routesOrder:          []string{route2, route1, route3},
+			request:              grpcRequest,
+			expectedMessageProto: grpcResponse2,
+			expectedResponse: &grpc.Response{
+				Status: *status.New(codes.OK, "Success"),
+			},
 		},
 		{
-			name:                    "route3 timeout, route 2 fallback returned",
-			routesOrder:             []string{route3, route2, route1},
-			expectedStatus:          int(codes.OK),
-			expectedResponseMessage: grpcResponse2,
+			name:        "http route 2",
+			router:      httpRouter,
+			routesOrder: []string{route2, route1, route3},
+			request:     httpRequest,
+			expectedResponse: fiberhttp.NewHTTPResponse(
+				&http.Response{
+					StatusCode: http.StatusOK,
+					Body:       makeBody(httpResponse2),
+				},
+			),
 		},
 		{
-			name:             "route3timeout",
-			routesOrder:      []string{route3},
-			expectedStatus:   int(codes.Unavailable),
+			name:                 "grpc route3 timeout, route 1 fallback returned",
+			router:               grpcRouter,
+			routesOrder:          []string{route3, route1, route2},
+			request:              grpcRequest,
+			expectedMessageProto: grpcResponse1,
+			expectedResponse: &grpc.Response{
+				Status: *status.New(codes.OK, "Success"),
+			},
+		},
+		{
+			name:        "http route3 timeout, route 1 fallback returned",
+			router:      httpRouter,
+			routesOrder: []string{route3, route1, route2},
+			request:     httpRequest,
+			expectedResponse: fiberhttp.NewHTTPResponse(
+				&http.Response{
+					StatusCode: http.StatusOK,
+					Body:       makeBody(httpResponse1),
+				},
+			),
+		},
+		{
+			name:                 "grpc route3 timeout, route 2 fallback returned",
+			router:               grpcRouter,
+			routesOrder:          []string{route3, route2, route1},
+			request:              grpcRequest,
+			expectedMessageProto: grpcResponse2,
+			expectedResponse: &grpc.Response{
+				Status: *status.New(codes.OK, "Success"),
+			},
+		},
+		{
+			name:        "http route3 timeout, route 2 fallback returned",
+			router:      httpRouter,
+			routesOrder: []string{route3, route2, route1},
+			request:     httpRequest,
+			expectedResponse: fiberhttp.NewHTTPResponse(
+				&http.Response{
+					StatusCode: http.StatusOK,
+					Body:       makeBody(httpResponse2),
+				},
+			),
+		},
+		{
+			name:        "grpc route3 timeout",
+			router:      grpcRouter,
+			routesOrder: []string{route3},
+			request:     grpcRequest,
+			expectedResponse: &grpc.Response{
+				Status: *status.New(codes.Unavailable, ""),
+			},
 			expectedFiberErr: fiber.NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.GRPC)),
+		},
+		{
+			name:             "http route3 timeout",
+			router:           httpRouter,
+			routesOrder:      []string{route3},
+			request:          httpRequest,
+			expectedFiberErr: fiber.NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.HTTP)),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Orchestrate route order with mock strategy to fix the order of routes for testing
 			strategy := testutils.NewMockRoutingStrategy(
-				router.GetRoutes(),
+				tt.router.GetRoutes(),
 				tt.routesOrder,
 				0,
 				nil,
 			)
-			router.SetStrategy(strategy)
+			tt.router.SetStrategy(strategy)
 
-			resp, ok := <-component.Dispatch(context.Background(), req).Iter()
-			if ok {
-				if resp.StatusCode() == tt.expectedStatus {
-					if tt.expectedFiberErr != nil {
-						payload, ok := resp.(*fiber.ErrorResponse)
-						require.True(t, ok, "fail to convert response to err")
-						assert.EqualValues(t, tt.expectedFiberErr, payload)
-					} else {
-						payload, ok := resp.Payload().(proto.Message)
-						require.True(t, ok, "fail to convert response to proto")
-						payloadByte, err := proto.Marshal(payload)
-						require.NoError(t, err, "unable to marshal proto")
-						responseProto := &testproto.PredictValuesResponse{}
-						err = proto.Unmarshal(payloadByte, responseProto)
-						require.NoError(t, err, "unable to unmarshal proto")
-						assert.True(t, proto.Equal(tt.expectedResponseMessage, responseProto), "actual proto response don't match expected")
-					}
-				} else {
-					assert.FailNow(t, "unexpected status")
-				}
+			resp, ok := <-tt.router.Dispatch(context.Background(), tt.request).Iter()
+			require.True(t, ok)
+
+			if tt.expectedFiberErr != nil {
+				assert.EqualValues(t, tt.expectedFiberErr, resp)
 			} else {
-				assert.FailNow(t, "fail to receive response queue")
+				require.Equal(t, resp.StatusCode(), tt.expectedResponse.StatusCode())
+				if tt.request.Protocol() == protocol.GRPC {
+					// Unmarshal the dynamic proto into PredictValuesResponse
+					payload, ok := resp.Payload().(proto.Message)
+					require.True(t, ok)
+					payloadByte, err := proto.Marshal(payload)
+					require.NoError(t, err)
+					responseProto := &testproto.PredictValuesResponse{}
+					err = proto.Unmarshal(payloadByte, responseProto)
+					require.NoError(t, err)
+
+					assert.True(t, proto.Equal(tt.expectedMessageProto, responseProto), "actual proto response don't match expected")
+				} else {
+					assert.Equal(t, tt.expectedResponse.Payload(), resp.Payload())
+				}
 			}
 		})
 	}
+}
+
+func makeBody(body []byte) io.ReadCloser {
+	return ioutil.NopCloser(bytes.NewReader(body))
 }

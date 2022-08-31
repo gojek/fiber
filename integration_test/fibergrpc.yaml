@@ -3,21 +3,21 @@ id: eager_router
 strategy:
   type: fiber.RandomRoutingStrategy
 routes:
-  - id: route_a
+  - id: route1
     type: PROXY
     timeout: "2s"
     endpoint: "localhost:50555"
     service: "testproto.UniversalPredictionService"
     method: "PredictValues"
     protocol: "grpc"
-  - id: route_b
+  - id: route2
     type: PROXY
     timeout: "2s"
     endpoint: "localhost:50556"
     service: "testproto.UniversalPredictionService"
     method: "PredictValues"
     protocol: "grpc"
-  - id: route_c
+  - id: route3
     type: PROXY
     timeout: "2s"
     endpoint: "localhost:50557"
