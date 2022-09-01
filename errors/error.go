@@ -39,9 +39,9 @@ var (
 	// ErrRouterStrategyTimeoutExceeded is a FiberError that's returned when
 	// the routing strategy fails to respond within given timeout
 	ErrRouterStrategyTimeoutExceeded = func(protocol protocol.Protocol) *FiberError {
-		statusCode := http.StatusInternalServerError
+		statusCode := http.StatusRequestTimeout
 		if protocol == "GRPC" {
-			statusCode = int(codes.Internal)
+			statusCode = int(codes.DeadlineExceeded)
 		}
 		return &FiberError{
 			Code:    statusCode,
@@ -52,9 +52,9 @@ var (
 	// ErrRouterStrategyReturnedEmptyRoutes is a FiberError that's returned when
 	// the routing strategy routing strategy returns an empty routes list
 	ErrRouterStrategyReturnedEmptyRoutes = func(protocol protocol.Protocol) *FiberError {
-		statusCode := http.StatusNotImplemented
+		statusCode := http.StatusNotFound
 		if protocol == "GRPC" {
-			statusCode = int(codes.Unimplemented)
+			statusCode = int(codes.NotFound)
 		}
 		return &FiberError{
 			Code:    statusCode,
