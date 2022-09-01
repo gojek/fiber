@@ -11,16 +11,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
 	"github.com/gojek/fiber/internal/testutils"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/stretchr/testify/assert"
 )
 
 type handlerTestCase struct {
 	name      string
 	request   *http.Request
-	responses []testutils.DelayedResponse
+	responses []testUtilsHttp.DelayedResponse
 	expected  *http.Response
 	timeout   time.Duration
 }
@@ -60,9 +61,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				"POST",
 				"localhost:8080/handler",
 				ioutil.NopCloser(bytes.NewBuffer([]byte("request body")))),
-			responses: []testutils.DelayedResponse{
+			responses: []testUtilsHttp.DelayedResponse{
 				{
-					Response: testutils.MockResp(
+					Response: testUtilsHttp.MockResp(
 						200,
 						string(responsePayload),
 						http.Header{
@@ -89,7 +90,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		{
 			name:      "error: no responses",
 			request:   newHTTPRequest("POST", "localhost:8080/handler", http.NoBody),
-			responses: []testutils.DelayedResponse{},
+			responses: []testUtilsHttp.DelayedResponse{},
 			expected: &http.Response{
 				StatusCode: http.StatusServiceUnavailable,
 				Header:     http.Header{},
@@ -104,9 +105,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		{
 			name:    "error: timeout exceeded",
 			request: newHTTPRequest("POST", "localhost:8080/handler", http.NoBody),
-			responses: []testutils.DelayedResponse{
+			responses: []testUtilsHttp.DelayedResponse{
 				{
-					Response: testutils.MockResp(
+					Response: testUtilsHttp.MockResp(
 						200,
 						string(responsePayload),
 						http.Header{

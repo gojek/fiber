@@ -11,6 +11,6 @@ type CachedPayload struct {
 }
 
 // Payload returns the cached []byte contents
-func (b *CachedPayload) Payload() []byte {
+func (b *CachedPayload) Payload() interface{} {
 	return b.data
 }

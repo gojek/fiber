@@ -1,0 +1,26 @@
+type: EAGER_ROUTER
+id: eager_router
+strategy:
+  type: fiber.RandomRoutingStrategy
+routes:
+  - id: route1
+    type: PROXY
+    timeout: "2s"
+    endpoint: "localhost:50555"
+    service: "testproto.UniversalPredictionService"
+    method: "PredictValues"
+    protocol: "grpc"
+  - id: route2
+    type: PROXY
+    timeout: "2s"
+    endpoint: "localhost:50556"
+    service: "testproto.UniversalPredictionService"
+    method: "PredictValues"
+    protocol: "grpc"
+  - id: route3
+    type: PROXY
+    timeout: "2s"
+    endpoint: "localhost:50557"
+    service: "testproto.UniversalPredictionService"
+    method: "PredictValues"
+    protocol: "grpc"

@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gojek/fiber"
 	fiberErrors "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/internal/testutils"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
+	"github.com/stretchr/testify/assert"
 )
 
 type lazyRouterTestCase struct {
@@ -30,16 +32,16 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "A-OK", nil, nil)}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "A-OK", nil, nil)}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK", nil, nil)}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
 			},
 			strategy: []string{
 				"route-b", "route-a",
 			},
 			expected: []fiber.Response{
-				testutils.MockResp(200, "B-OK", nil, nil).WithBackendName("route-b"),
+				testUtilsHttp.MockResp(200, "B-OK", nil, nil).WithBackendName("route-b"),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -48,16 +50,16 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testutils.DelayedResponse{Response: testutils.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable)}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK", nil, nil)}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
 			},
 			strategy: []string{
 				"route-a", "route-b",
 			},
 			expected: []fiber.Response{
-				testutils.MockResp(200, "B-OK", nil, nil).WithBackendName("route-b"),
+				testUtilsHttp.MockResp(200, "B-OK", nil, nil).WithBackendName("route-b"),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -66,19 +68,19 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testutils.DelayedResponse{
+					testUtilsHttp.DelayedResponse{
 						Latency:  100 * time.Millisecond,
-						Response: testutils.MockResp(200, "A-OK", nil, nil)}),
+						Response: testUtilsHttp.MockResp(200, "A-OK", nil, nil)}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
-					testutils.DelayedResponse{Response: testutils.MockResp(200, "B-OK", nil, nil)}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
 			},
 			strategy: []string{
 				"route-a", "route-b",
 			},
 			strategyLatency: 50 * time.Millisecond,
 			expected: []fiber.Response{
-				testutils.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout),
+				testUtilsHttp.MockResp(408, "", nil, fiberErrors.ErrRequestTimeout(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -86,7 +88,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:            "error: strategy timeout exceeded",
 			strategyLatency: 200 * time.Millisecond,
 			expected: []fiber.Response{
-				testutils.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrRouterStrategyTimeoutExceeded(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -94,7 +96,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:     "error: routing strategy returned empty routes",
 			strategy: []string{},
 			expected: []fiber.Response{
-				testutils.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes),
+				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -102,7 +104,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			name:              "error: routing strategy responded with exception",
 			strategyException: errors.New("unexpected exception happened"),
 			expected: []fiber.Response{
-				testutils.MockResp(500, "", nil, fiberErrors.NewHTTPError(errors.New("unexpected exception happened"))),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.NewFiberError(protocol.HTTP, errors.New("unexpected exception happened"))),
 			},
 			timeout: 100 * time.Millisecond,
 		},
@@ -123,7 +125,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
 
 			received := make([]fiber.Response, 0)
-			request := testutils.MockReq("POST", "http://localhost:8080/lazy-router", "payload")
+			request := testUtilsHttp.MockReq("POST", "http://localhost:8080/lazy-router", "payload")
 			for responsesCh := router.Dispatch(ctx, request).Iter(); ; {
 				select {
 				case resp, ok := <-responsesCh:

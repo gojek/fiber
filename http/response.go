@@ -51,17 +51,17 @@ func (r *Response) Header() http.Header {
 // FromHTTP constructs a fiber http or error response from http response / error object
 func NewHTTPResponse(httpResponse *http.Response) fiber.Response {
 	if httpResponse == nil {
-		return fiber.NewErrorResponse(fmt.Errorf("fiber: empty response received"))
+		return fiber.NewErrorResponse(fmt.Errorf("empty response received"))
 	}
 	// Read the response body
 	body, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return fiber.NewErrorResponse(err)
+		return fiber.NewErrorResponse(fmt.Errorf("unable to read response body: %s", err.Error()))
 	}
 	// If StatusCode is not OK, make error response
 	if !isSuccessStatus(httpResponse.StatusCode) {
 		// Wrap into a Fiber HTTP Error
-		err = &errors.HTTPError{
+		err = &errors.FiberError{
 			Code:    httpResponse.StatusCode,
 			Message: string(body),
 		}

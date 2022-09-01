@@ -4,7 +4,11 @@
 traffic mixers from a set of composable abstract network components. 
 
 Core components of fiber are transport agnostic, however, there is 
-Go's `net/http`-based implementation provided in [fiber/http](http) package.
+Go's `net/http`-based implementation provided in [fiber/http](http) package 
+and a grpc implementation using server reflection in [fiber/grpc](grpc).
+
+The grpc implementation will return a [dynamicpb message](https://pkg.go.dev/google.golang.org/protobuf/types/dynamicpb) 
+and it is expected that the client [marshal](https://pkg.go.dev/github.com/golang/protobuf/proto#Marshal) the message and unmarshall into the intended proto response.
 
 ## Usage
 
@@ -12,13 +16,14 @@ Go's `net/http`-based implementation provided in [fiber/http](http) package.
 import (
     "github.com/gojek/fiber"                  // fiber core
     "github.com/gojek/fiber/config"           // fiber config 
-    fiberhttp "github.com/gojek/fiber/http"   // fiber http
+    fiberhttp "github.com/gojek/fiber/http"   // fiber http if required
+    fibergrpc "github.com/gojek/fiber/grpc"   // fiber grpc if required
 )
 ```
 
 Define your fiber component in YAML config. For example:
 
-**fiber.yaml:**
+**fiber.yaml for http:**
 ```yaml
 type: EAGER_ROUTER
 id: eager_router
@@ -33,6 +38,29 @@ routes:
     type: PROXY
     timeout: "40s"
     endpoint: "http://localhost:8080/routes/route-b"
+```
+
+**fiber.yaml for grpc:**
+```yaml
+type: EAGER_ROUTER
+id: eager_router
+strategy:
+  type: fiber.RandomRoutingStrategy
+routes:
+  - id: route_a
+    type: PROXY
+    timeout: "20s"
+    endpoint: "localhost:50555" 
+    service: "mypackage.Greeter"
+    method: "SayHello"
+    protocol: "grpc"
+  - id: route_b
+    type: PROXY
+    timeout: "40s"
+    endpoint: "localhost:50555"
+    service: "mypackage.Greeter"
+    method: "SayHello"
+    protocol: "grpc"
 ```
 
 Construct new fiber component from the config:
@@ -86,7 +114,7 @@ component.SetRoutes(map[string]fiber.Component{
 })
 ``` 
 
-For more sample code snippets, head over to the [example](./example) directory.
+For more sample code snippets and grpc usage, head over to the [example](./example) directory.
 
 ## Concepts
 
@@ -125,8 +153,11 @@ in more complicated execution graphs. There are few standard fiber components im
 - `PROXY` – component, that dispatches incoming request against configured proxy backend url.                   
 Configuration:               
     - `id` – component ID. Example `my_proxy`
-    - `endpoint` - proxy endpoint url. Example `http://your-proxy:8080/nested/path`
+    - `endpoint` - proxy endpoint url. Example for http `http://your-proxy:8080/nested/path` or  grpc `127.0.0.1:50050`
     - `timeout` - request timeout for dispatching a request. Example `100ms` 
+    - `protocol` - communication protocol. Only "grpc" or "http" supported.
+    - `service` - for grpc only, package name and service name. Example `fiber.Greeter` 
+    - `method` - for grpc only, method name of the grpc service to invoke. Example `SayHello`
     
 - `FAN_OUT` - component, that dispatches incoming request by sending it to each of its registered 
 `routes`. Response queue will contain responses of each route in order they have arrived.  

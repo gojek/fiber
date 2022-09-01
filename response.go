@@ -1,14 +1,13 @@
 package fiber
 
 import (
-	"net/http"
-
 	"github.com/gojek/fiber/errors"
+	"github.com/gojek/fiber/protocol"
 )
 
 type Response interface {
 	IsSuccess() bool
-	Payload() []byte
+	Payload() interface{}
 	StatusCode() int
 	BackendName() string
 	WithBackendName(string) Response
@@ -38,20 +37,15 @@ func (resp *ErrorResponse) StatusCode() int {
 }
 
 func NewErrorResponse(err error) Response {
-	var httpErr *errors.HTTPError
-
-	if castedError, ok := err.(*errors.HTTPError); ok {
-		httpErr = castedError
+	var fiberErr *errors.FiberError
+	if castedError, ok := err.(*errors.FiberError); ok {
+		fiberErr = castedError
 	} else {
-		httpErr = &errors.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		}
+		fiberErr = errors.NewFiberError(protocol.HTTP, err)
 	}
-
-	payload, _ := httpErr.ToJSON()
+	payload, _ := fiberErr.ToJSON()
 	return &ErrorResponse{
 		CachedPayload: NewCachedPayload(payload),
-		code:          httpErr.Code,
+		code:          fiberErr.Code,
 	}
 }

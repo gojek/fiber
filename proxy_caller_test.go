@@ -6,14 +6,14 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/testutils"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProxyCaller_Dispatch(t *testing.T) {
 	host, path := "http://localhost:8080", "/recommendations/search"
-	req := testutils.MockReq("POST", fmt.Sprintf("%s%s", host, path), "")
+	req := testUtilsHttp.MockReq("POST", fmt.Sprintf("%s%s", host, path), "")
 
 	dispatcher := new(MockDispatcher)
 	dispatcher.On("Do", req).Return(nil)

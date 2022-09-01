@@ -7,15 +7,20 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/gojek/fiber"
 	fiberHTTP "github.com/gojek/fiber/http"
-	"github.com/gojek/fiber/internal/testutils"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
+	"github.com/gojek/fiber/protocol"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type unsupportedRequest struct {
 	*fiber.CachedPayload
+}
+
+func (r *unsupportedRequest) Protocol() protocol.Protocol {
+	return protocol.HTTP
 }
 
 func (r *unsupportedRequest) Clone() (fiber.Request, error) {
@@ -77,16 +82,16 @@ func TestDispatcher_Do(t *testing.T) {
 	suite := []dispatcherTestCase{
 		{
 			name:    "valid response",
-			request: testutils.MockReq("POST", "localhost:8080/dispatcher", ""),
+			request: testUtilsHttp.MockReq("POST", "localhost:8080/dispatcher", ""),
 			response: &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(bytes.NewReader([]byte("OK response"))),
 			},
-			expected: testutils.MockResp(200, "OK response", nil, nil),
+			expected: testUtilsHttp.MockResp(200, "OK response", nil, nil),
 		},
 		{
 			name:     "invalid response",
-			request:  testutils.MockReq("POST", "localhost:8080/dispatcher", ""),
+			request:  testUtilsHttp.MockReq("POST", "localhost:8080/dispatcher", ""),
 			error:    errors.New("http: nil Request.URL"),
 			expected: fiber.NewErrorResponse(errors.New("http: nil Request.URL")),
 		},

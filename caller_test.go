@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gojek/fiber"
+	testutils "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/internal/testutils"
 )
 
 type MockDispatcher struct {

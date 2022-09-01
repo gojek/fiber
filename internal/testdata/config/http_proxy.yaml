@@ -1,0 +1,4 @@
+type: PROXY
+id: proxy_name
+timeout: "20s"
+endpoint: "localhost:1234"

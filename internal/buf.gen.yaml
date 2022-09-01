@@ -1,0 +1,16 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/gojek/fiber
+    except:
+      - buf.build/googleapis/googleapis
+plugins:
+  - name: go
+    out: testdata/gen
+    opt: paths=import,module=github.com/gojek/fiber
+  - name: go-grpc
+    out: testdata/gen
+    opt:
+      - paths=import,module=github.com/gojek/fiber
+      - require_unimplemented_servers=false
