@@ -1,0 +1,5 @@
+type: PROXY
+id: proxy_name
+timeout: "20s"
+endpoint: "localhost:50555"
+protocol: "grpc"

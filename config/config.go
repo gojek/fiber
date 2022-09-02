@@ -67,15 +67,16 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 }
 
 // Routes takes in an object of type Routes and returns a map of each route's ID and the route
-func (r Routes) Routes() map[string]fiber.Component {
+func (r Routes) Routes() (map[string]fiber.Component, error) {
 	routes := make(map[string]fiber.Component)
 	for _, routeConfig := range r {
 		if route, err := routeConfig.initComponent(); err != nil {
+			return nil, err
 		} else {
 			routes[route.ID()] = route
 		}
 	}
-	return routes
+	return routes, nil
 }
 
 // MultiRouteConfig is used to parse the configuration for a MultiRouteComponent
@@ -112,7 +113,11 @@ func (c *RouterConfig) initComponent() (fiber.Component, error) {
 	default:
 		return nil, fmt.Errorf("unknown router type: [%s]", c.Type)
 	}
-	router.SetRoutes(c.Routes.Routes())
+	routes, err := c.Routes.Routes()
+	if err != nil {
+		return nil, err
+	}
+	router.SetRoutes(routes)
 
 	strategy, err := c.Strategy.Strategy()
 	if err != nil {
@@ -149,7 +154,12 @@ func (c *FanInConfig) FanIn() (fiber.FanIn, error) {
 
 func (c *CombinerConfig) initComponent() (fiber.Component, error) {
 	combiner := fiber.NewCombiner(c.ID)
-	combiner.SetRoutes(c.Routes.Routes())
+
+	routes, err := c.Routes.Routes()
+	if err != nil {
+		return nil, err
+	}
+	combiner.SetRoutes(routes)
 
 	fanIn, err := c.FanIn.FanIn()
 	if err != nil {
