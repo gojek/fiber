@@ -180,9 +180,13 @@ type ProxyConfig struct {
 	ComponentConfig
 	Endpoint string   `json:"endpoint" required:"true"`
 	Timeout  Duration `json:"timeout"`
-	Protocol string   `json:"protocol,omitempty"`
-	Service  string   `json:"service,omitempty"`
-	Method   string   `json:"method,omitempty"`
+	Protocol string   `json:"protocol"`
+	GrpcConfig
+}
+
+type GrpcConfig struct {
+	Service string `json:"service,omitempty"`
+	Method  string `json:"method,omitempty"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {

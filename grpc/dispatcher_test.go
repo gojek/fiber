@@ -97,7 +97,7 @@ func TestNewDispatcher(t *testing.T) {
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
 		},
 		{
 			name: "empty service",
@@ -108,7 +108,7 @@ func TestNewDispatcher(t *testing.T) {
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
 		},
 		{
 			name: "empty method",
@@ -119,7 +119,7 @@ func TestNewDispatcher(t *testing.T) {
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)")),
+				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
 		},
 		{
 			name: "invalid endpoint",

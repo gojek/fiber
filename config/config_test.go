@@ -112,7 +112,7 @@ func TestFromConfig(t *testing.T) {
 		{
 			name:           "grpc proxy",
 			configPath:     "../internal/testdata/config/invalid_grpc_proxy.yaml",
-			expectedErrMsg: "fiber: grpc dispatcher: missing config (endpoint/service/method/response-proto)",
+			expectedErrMsg: "fiber: grpc dispatcher: missing config (endpoint/service/method)",
 		},
 	}
 
