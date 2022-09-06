@@ -70,11 +70,11 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 func (r Routes) Routes() (map[string]fiber.Component, error) {
 	routes := make(map[string]fiber.Component)
 	for _, routeConfig := range r {
-		if route, err := routeConfig.initComponent(); err != nil {
+		route, err := routeConfig.initComponent()
+		if err != nil {
 			return nil, err
-		} else {
-			routes[route.ID()] = route
 		}
+		routes[route.ID()] = route
 	}
 	return routes, nil
 }
