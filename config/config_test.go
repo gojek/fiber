@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -93,37 +94,47 @@ func TestFromConfig(t *testing.T) {
 	grpcProxy := fiber.NewProxy(nil, grpcCaller)
 
 	tests := []struct {
-		name       string
-		configPath string
-		want       fiber.Component
+		name              string
+		configPath        string
+		expectedComponent fiber.Component
+		expectedErrMsg    string
 	}{
 		{
-			name:       "http proxy",
-			configPath: "../internal/testdata/config/http_proxy.yaml",
-			want:       httpProxy,
+			name:              "http proxy",
+			configPath:        "../internal/testdata/config/http_proxy.yaml",
+			expectedComponent: httpProxy,
 		},
 		{
-			name:       "grpc proxy",
-			configPath: "../internal/testdata/config/grpc_proxy.yaml",
-			want:       grpcProxy,
+			name:              "grpc proxy",
+			configPath:        "../internal/testdata/config/grpc_proxy.yaml",
+			expectedComponent: grpcProxy,
+		},
+		{
+			name:           "grpc proxy",
+			configPath:     "../internal/testdata/config/invalid_grpc_proxy.yaml",
+			expectedErrMsg: "fiber: grpc dispatcher: missing config (endpoint/service/method)",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := config.InitComponentFromConfig(tt.configPath)
-			assert.NoError(t, err)
-			assert.True(t,
-				cmp.Equal(tt.want, got,
-					cmpopts.IgnoreUnexported(grpc.ClientConn{}, dynamicpb.Message{}),
-					cmp.AllowUnexported(
-						fiber.BaseComponent{},
-						fiber.Proxy{},
-						fiber.Caller{},
-						fibergrpc.Dispatcher{},
-						fiberhttp.Dispatcher{}),
-				),
-				"config not equal to expected")
+			if tt.expectedErrMsg == "" {
+				require.NoError(t, err)
+				assert.True(t,
+					cmp.Equal(tt.expectedComponent, got,
+						cmpopts.IgnoreUnexported(grpc.ClientConn{}, dynamicpb.Message{}),
+						cmp.AllowUnexported(
+							fiber.BaseComponent{},
+							fiber.Proxy{},
+							fiber.Caller{},
+							fibergrpc.Dispatcher{},
+							fiberhttp.Dispatcher{}),
+					),
+					"config not equal to expected")
+			} else {
+				assert.Equal(t, tt.expectedErrMsg, err.Error())
+			}
 		})
 	}
 }

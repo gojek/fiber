@@ -92,7 +92,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 	if config.Endpoint == "" || config.Service == "" || config.Method == "" {
 		return nil, fiberError.ErrInvalidInput(
 			protocol.GRPC,
-			errors.New("grpc dispatcher: missing config (endpoint/service/method/response-proto)"))
+			errors.New("grpc dispatcher: missing config (endpoint/service/method)"))
 	}
 
 	conn, err := grpc.DialContext(context.Background(), config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
