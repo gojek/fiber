@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 const (
@@ -82,11 +81,10 @@ func TestMain(m *testing.M) {
 
 func TestNewDispatcher(t *testing.T) {
 	tests := []struct {
-		name              string
-		dispatcherConfig  DispatcherConfig
-		expected          *Dispatcher
-		expectedProtoName string
-		expectedErr       *fiberError.FiberError
+		name             string
+		dispatcherConfig DispatcherConfig
+		expected         *Dispatcher
+		expectedErr      *fiberError.FiberError
 	}{
 		{
 			name: "empty endpoint",
@@ -122,30 +120,6 @@ func TestNewDispatcher(t *testing.T) {
 				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
 		},
 		{
-			name: "invalid endpoint",
-			dispatcherConfig: DispatcherConfig{
-				Service:  service,
-				Method:   method,
-				Endpoint: ":1",
-			},
-			expected: nil,
-			expectedErr: fiberError.NewFiberError(
-				protocol.GRPC,
-				errors.New("grpc dispatcher: unable to get reflection information, ensure server reflection is enable and config are correct")),
-		},
-		{
-			name: "invalid response",
-			dispatcherConfig: DispatcherConfig{
-				Service:  service,
-				Method:   "fake method",
-				Endpoint: fmt.Sprintf(":%d", port),
-			},
-			expected: nil,
-			expectedErr: fiberError.NewFiberError(
-				protocol.GRPC,
-				errors.New("grpc dispatcher: unable to fetch file descriptors, ensure config are correct")),
-		},
-		{
 			name: "ok response",
 			dispatcherConfig: DispatcherConfig{
 				Service:  service,
@@ -158,7 +132,6 @@ func TestNewDispatcher(t *testing.T) {
 				serviceMethod: fmt.Sprintf("%s/%s", service, method),
 				endpoint:      fmt.Sprintf(":%d", port),
 			},
-			expectedProtoName: "PredictValuesResponse",
 		},
 	}
 
@@ -173,13 +146,10 @@ func TestNewDispatcher(t *testing.T) {
 				require.NoError(t, err)
 				// responseProto and conn are ignored as they have pointer which value will not be identical
 				diff := cmp.Diff(tt.expected, got,
-					cmpopts.IgnoreFields(Dispatcher{}, "responseProto", "conn"),
+					cmpopts.IgnoreFields(Dispatcher{}, "conn"),
 					cmp.AllowUnexported(Dispatcher{}),
 				)
 				require.Empty(t, diff)
-				responseProto, ok := got.responseProto.(*dynamicpb.Message)
-				require.True(t, ok, "fail to convert response proto")
-				require.Equal(t, tt.expectedProtoName, string(responseProto.Type().Descriptor().Name()))
 			}
 		})
 	}
@@ -213,7 +183,8 @@ func TestDispatcher_Do(t *testing.T) {
 		{
 			name: "success",
 			input: &Request{
-				Message: &testproto.PredictValuesRequest{}},
+				Message: []byte{},
+			},
 			expected: &Response{
 				Metadata: metadata.New(map[string]string{
 					"content-type": "application/grpc",
@@ -237,14 +208,8 @@ func TestDispatcher_Do(t *testing.T) {
 				require.EqualValues(t, tt.expected.StatusCode(), grpcResponse.StatusCode())
 				require.EqualValues(t, tt.expected.BackendName(), grpcResponse.BackendName())
 				require.EqualValues(t, tt.expected.IsSuccess(), grpcResponse.IsSuccess())
-				payload, ok := grpcResponse.Payload().(proto.Message)
-				if !ok {
-					assert.FailNow(t, "Fail to type assert response payload")
-				}
-				payloadByte, err := proto.Marshal(payload)
-				require.NoError(t, err, "unable to marshal payload")
 				responseProto := &testproto.PredictValuesResponse{}
-				err = proto.Unmarshal(payloadByte, responseProto)
+				err = proto.Unmarshal(grpcResponse.Payload(), responseProto)
 				require.NoError(t, err)
 				assert.True(t, proto.Equal(mockResponse, responseProto), "actual proto response don't match expected")
 			}

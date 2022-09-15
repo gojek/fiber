@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
@@ -77,10 +76,6 @@ func (h *Handler) write(resp fiber.Response, writer http.ResponseWriter) (err er
 	}
 
 	writer.WriteHeader(resp.StatusCode())
-	bytePayLoad, ok := resp.Payload().([]byte)
-	if !ok {
-		return fiberErrors.NewFiberError(protocol.HTTP, errors.New("unable to parse payload"))
-	}
-	_, err = writer.Write(bytePayLoad)
+	_, err = writer.Write(resp.Payload())
 	return err
 }

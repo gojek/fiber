@@ -7,12 +7,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 type Response struct {
 	Metadata metadata.MD
-	Message  proto.Message
+	Message  []byte
 	Status   status.Status
 }
 
@@ -20,7 +19,7 @@ func (r *Response) IsSuccess() bool {
 	return r.StatusCode() == int(codes.OK)
 }
 
-func (r *Response) Payload() interface{} {
+func (r *Response) Payload() []byte {
 	return r.Message
 }
 

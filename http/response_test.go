@@ -85,7 +85,7 @@ func TestNewHTTPResponse(t *testing.T) {
 			resp := fiberHTTP.NewHTTPResponse(tt.response)
 
 			require.NotNil(t, resp)
-			require.Equal(t, string(tt.expected.payload), string(resp.Payload().([]byte)))
+			require.Equal(t, string(tt.expected.payload), string(resp.Payload()))
 			require.Equal(t, tt.expected.status, resp.StatusCode())
 			require.Equal(t, tt.expected.status/100 == 2, resp.IsSuccess())
 		})
