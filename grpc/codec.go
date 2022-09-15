@@ -1,8 +1,9 @@
 package grpc
 
 import (
-	"google.golang.org/grpc/encoding"
 	"io"
+
+	"google.golang.org/grpc/encoding"
 )
 
 // CodecName is the name registered for the proto compressor.
