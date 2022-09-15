@@ -25,9 +25,14 @@ func (r *Request) Header() map[string][]string {
 }
 
 func (r *Request) Clone() (fiber.Request, error) {
+	var copiedMessage []byte
+	if len(r.Message) > 0 {
+		copiedMessage = make([]byte, len(r.Message))
+		copy(copiedMessage, r.Message)
+	}
 	return &Request{
 		Metadata: r.Metadata,
-		Message:  r.Message,
+		Message:  copiedMessage,
 	}, nil
 }
 

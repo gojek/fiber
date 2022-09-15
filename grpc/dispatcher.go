@@ -1,10 +1,10 @@
 package grpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"go.uber.org/zap/buffer"
 	"time"
 
 	"github.com/gojek/fiber"
@@ -57,8 +57,12 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 	defer cancel()
 	ctx = metadata.NewOutgoingContext(ctx, grpcRequest.Metadata)
 
-	response := new(buffer.Buffer)
+	response := new(bytes.Buffer)
 	var responseHeader metadata.MD
+
+	// Dispatcher will send both request and payload as bytes, with the use of codec
+	// to prevent marshaling. The codec content type will be sent with request and
+	// the server will attempt to unmarshal with the codec.
 	err := d.conn.Invoke(
 		ctx,
 		d.serviceMethod,

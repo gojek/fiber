@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/gojek/fiber/config"
@@ -49,8 +48,6 @@ func main() {
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
 		if resp.StatusCode() == int(codes.OK) {
-			log.Print(resp.Payload())
-
 			//values can be retrieved using protoReflect or marshalled into proto
 			responseProto := &testproto.PredictValuesResponse{}
 			err = proto.Unmarshal(resp.Payload(), responseProto)
@@ -59,7 +56,7 @@ func main() {
 			}
 			log.Print(responseProto.String())
 		} else {
-			log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
+			log.Fatalf(string(resp.Payload()))
 		}
 	} else {
 		log.Fatalf("fail to receive response queue")

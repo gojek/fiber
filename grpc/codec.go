@@ -1,41 +1,38 @@
 package grpc
 
 import (
-	"fmt"
+	"google.golang.org/grpc/encoding"
 	"io"
-
-	"google.golang.org/protobuf/proto"
 )
 
 // CodecName is the name registered for the proto compressor.
 const CodecName = "FiberCodec"
 
+// FiberCodec is a custom codec to prevent marshaling and unmarshalling
+// when unnecessary, base on the inputs
 type FiberCodec struct{}
 
+// Marshal will attempt to pass the request directly if it is a byte slice,
+// otherwise unmarshal the request proto using the default implementation
 func (FiberCodec) Marshal(v interface{}) ([]byte, error) {
 	b, ok := v.([]byte)
 	if ok {
 		return b, nil
 	}
-	vv, ok := v.(proto.Message)
-	if !ok {
-		return nil, fmt.Errorf("failed to marshal, message is %T, want proto.Message or []byte", v)
-	}
-	return proto.Marshal(vv)
+	defaultCodec := encoding.GetCodec("proto")
+	return defaultCodec.Marshal(v)
 }
 
+// Unmarshal will attempt to write the request directly if it is a writer,
+// otherwise unmarshal the request proto using the default implementation
 func (FiberCodec) Unmarshal(data []byte, v interface{}) error {
-
 	myType, ok := v.(io.Writer)
 	if ok {
-		myType.Write(data)
-		return nil
+		_, err := myType.Write(data)
+		return err
 	}
-	vv, ok := v.(proto.Message)
-	if !ok {
-		return fmt.Errorf("failed to marshal, message is %T, want proto.Message or io.writer", v)
-	}
-	return proto.Unmarshal(data, vv)
+	defaultCodec := encoding.GetCodec("proto")
+	return defaultCodec.Unmarshal(data, v)
 }
 
 func (FiberCodec) Name() string {
