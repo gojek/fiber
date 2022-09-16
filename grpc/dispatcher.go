@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	encoding.RegisterCodec(FiberCodec{})
+	encoding.RegisterCodec(&FiberCodec{})
 }
 
 const (
