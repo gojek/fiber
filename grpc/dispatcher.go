@@ -113,7 +113,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 
 	dispatcher := &Dispatcher{
 		timeout:       configuredTimeout,
-		serviceMethod: fmt.Sprintf("%s/%s", config.Service, config.Method),
+		serviceMethod: fmt.Sprintf("/%s/%s", config.Service, config.Method),
 		endpoint:      config.Endpoint,
 		conn:          conn,
 	}
