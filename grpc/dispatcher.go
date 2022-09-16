@@ -69,7 +69,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 		grpcRequest.Payload(),
 		response,
 		grpc.Header(&responseHeader),
-		grpc.CallContentSubtype(CodecName),
+		grpc.CallContentSubtype(codecName),
 	)
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status

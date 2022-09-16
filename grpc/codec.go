@@ -7,7 +7,7 @@ import (
 )
 
 // CodecName is the name registered for the proto compressor.
-const CodecName = "FiberCodec"
+const codecName = "fiber"
 
 // FiberCodec is a custom codec to prevent marshaling and unmarshalling
 // when unnecessary, base on the inputs
@@ -37,7 +37,7 @@ func (fc *FiberCodec) Unmarshal(data []byte, v interface{}) error {
 }
 
 func (*FiberCodec) Name() string {
-	return CodecName
+	return codecName
 }
 
 func (fc *FiberCodec) getDefaultCodec() encoding.Codec {
