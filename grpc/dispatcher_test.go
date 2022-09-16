@@ -129,7 +129,7 @@ func TestNewDispatcher(t *testing.T) {
 			},
 			expected: &Dispatcher{
 				timeout:       time.Second * 5,
-				serviceMethod: fmt.Sprintf("%s/%s", service, method),
+				serviceMethod: fmt.Sprintf("/%s/%s", service, method),
 				endpoint:      fmt.Sprintf(":%d", port),
 			},
 		},
