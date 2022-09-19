@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/gojek/fiber/config"
@@ -32,42 +31,32 @@ func main() {
 	if err != nil {
 		log.Fatalf("\nerror: %v\n", err)
 	}
-
-	var req = &grpc.Request{
-		Message: &testproto.PredictValuesRequest{
-			PredictionRows: []*testproto.PredictionRow{
-				{
-					RowId: "1",
-				},
-				{
-					RowId: "2",
-				},
+	bytePayload, _ := proto.Marshal(&testproto.PredictValuesRequest{
+		PredictionRows: []*testproto.PredictionRow{
+			{
+				RowId: "1",
+			},
+			{
+				RowId: "2",
 			},
 		},
+	})
+	var req = &grpc.Request{
+		Message: bytePayload,
 	}
 
 	resp, ok := <-component.Dispatch(context.Background(), req).Iter()
 	if ok {
 		if resp.StatusCode() == int(codes.OK) {
-			log.Print(resp.Payload())
-
 			//values can be retrieved using protoReflect or marshalled into proto
-			payload, ok := resp.Payload().(proto.Message)
-			if !ok {
-				log.Fatalf("fail to convert response to proto")
-			}
-			payloadByte, err := proto.Marshal(payload)
-			if err != nil {
-				log.Fatalf("fail to marshal to proto")
-			}
 			responseProto := &testproto.PredictValuesResponse{}
-			err = proto.Unmarshal(payloadByte, responseProto)
+			err = proto.Unmarshal(resp.Payload(), responseProto)
 			if err != nil {
 				log.Fatalf("fail to unmarshal to proto")
 			}
 			log.Print(responseProto.String())
 		} else {
-			log.Fatalf(fmt.Sprintf("%s", resp.Payload()))
+			log.Fatalf(string(resp.Payload()))
 		}
 	} else {
 		log.Fatalf("fail to receive response queue")

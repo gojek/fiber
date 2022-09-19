@@ -4,11 +4,9 @@ import (
 	"testing"
 
 	"github.com/gojek/fiber"
-	testproto "github.com/gojek/fiber/internal/testdata/gen/testdata/proto"
 	"github.com/gojek/fiber/protocol"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestRequest_Clone(t *testing.T) {
@@ -24,7 +22,7 @@ func TestRequest_Clone(t *testing.T) {
 			name: "simple",
 			req: &Request{
 				Metadata: metadata.New(map[string]string{"test": "1"}),
-				Message:  &testproto.PredictValuesRequest{},
+				Message:  []byte("Testing"),
 			},
 		},
 	}
@@ -85,21 +83,21 @@ func TestRequest_OperationName(t *testing.T) {
 func TestRequest_Payload(t *testing.T) {
 
 	tests := []struct {
-		name string
-		req  Request
-		want interface{}
+		name     string
+		req      Request
+		expected []byte
 	}{
 		{
 			name: "ok payload",
 			req: Request{
-				Message: &testproto.PredictValuesResponse{},
+				Message: []byte("Testing"),
 			},
-			want: &testproto.PredictValuesResponse{},
+			expected: []byte("Testing"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.True(t, proto.Equal(tt.want.(proto.Message), tt.req.Payload().(proto.Message)), "payload not equal to expected")
+			assert.Equal(t, tt.expected, tt.req.Payload())
 		})
 	}
 }

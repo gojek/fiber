@@ -2,7 +2,6 @@ package http
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -56,11 +55,7 @@ func NewHTTPRequest(req *http.Request) (*Request, error) {
 
 // Copy creates a deep copy of this request
 func (r *Request) Clone() (fiber.Request, error) {
-	bytePayLoad, ok := r.Payload().([]byte)
-	if !ok {
-		return nil, errors.New("unable to parse payload")
-	}
-	bodyReader := bytes.NewReader(bytePayLoad)
+	bodyReader := bytes.NewReader(r.Payload())
 
 	proxyRequest, err := http.NewRequest(r.Method, r.URL.String(), bodyReader)
 	if err != nil {

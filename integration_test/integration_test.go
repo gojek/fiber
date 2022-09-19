@@ -118,17 +118,18 @@ func runTestGrpcServer(port int, response *testproto.PredictValuesResponse, dela
 }
 
 func TestE2EFromConfig(t *testing.T) {
-	grpcRequest := &grpc.Request{
-		Message: &testproto.PredictValuesRequest{
-			PredictionRows: []*testproto.PredictionRow{
-				{
-					RowId: "1",
-				},
-				{
-					RowId: "2",
-				},
+	bytePayload, _ := proto.Marshal(&testproto.PredictValuesRequest{
+		PredictionRows: []*testproto.PredictionRow{
+			{
+				RowId: "1",
+			},
+			{
+				RowId: "2",
 			},
 		},
+	})
+	grpcRequest := &grpc.Request{
+		Message: bytePayload,
 	}
 
 	httpReq, err := http.NewRequest(
@@ -284,13 +285,8 @@ func TestE2EFromConfig(t *testing.T) {
 			} else {
 				require.Equal(t, resp.StatusCode(), tt.expectedResponse.StatusCode())
 				if tt.request.Protocol() == protocol.GRPC {
-					// Unmarshal the dynamic proto into PredictValuesResponse
-					payload, ok := resp.Payload().(proto.Message)
-					require.True(t, ok)
-					payloadByte, err := proto.Marshal(payload)
-					require.NoError(t, err)
 					responseProto := &testproto.PredictValuesResponse{}
-					err = proto.Unmarshal(payloadByte, responseProto)
+					err = proto.Unmarshal(resp.Payload(), responseProto)
 					require.NoError(t, err)
 
 					assert.True(t, proto.Equal(tt.expectedMessageProto, responseProto), "actual proto response don't match expected")

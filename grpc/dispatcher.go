@@ -1,10 +1,10 @@
 package grpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gojek/fiber"
@@ -13,16 +13,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/encoding"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protodesc"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
-	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/dynamicpb"
 )
+
+func init() {
+	encoding.RegisterCodec(&FiberCodec{})
+}
 
 const (
 	TimeoutDefault = time.Second
@@ -36,8 +34,6 @@ type Dispatcher struct {
 	endpoint string
 	// conn is the grpc connection dialed upon creation of dispatcher
 	conn *grpc.ClientConn
-	// ResponseProto is the proto return type of the service.
-	responseProto proto.Message
 }
 
 type DispatcherConfig struct {
@@ -61,9 +57,20 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 	defer cancel()
 	ctx = metadata.NewOutgoingContext(ctx, grpcRequest.Metadata)
 
-	responseProto := proto.Clone(d.responseProto)
+	response := new(bytes.Buffer)
 	var responseHeader metadata.MD
-	err := d.conn.Invoke(ctx, d.serviceMethod, grpcRequest.Payload(), responseProto, grpc.Header(&responseHeader))
+
+	// Dispatcher will send both request and payload as bytes, with the use of codec
+	// to prevent marshaling. The codec content type will be sent with request and
+	// the server will attempt to unmarshal with the codec.
+	err := d.conn.Invoke(
+		ctx,
+		d.serviceMethod,
+		grpcRequest.Payload(),
+		response,
+		grpc.Header(&responseHeader),
+		grpc.CallContentSubtype(codecName),
+	)
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)
@@ -76,7 +83,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 
 	return &Response{
 		Metadata: responseHeader,
-		Message:  responseProto,
+		Message:  response.Bytes(),
 		Status:   *status.New(codes.OK, "Success"),
 	}
 }
@@ -104,116 +111,11 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 			errors.New("grpc dispatcher: "+responseStatus.String()))
 	}
 
-	// Get reflection response from reflection server, which contain FileDescriptorProtos
-	reflectionResponse, err := getReflectionResponse(conn, config.Service)
-	if err != nil {
-		return nil, err
-	}
-	fileDescriptorProtoBytes := reflectionResponse.GetFileDescriptorResponse().GetFileDescriptorProto()
-
-	messageDescriptor, err := getMessageDescriptor(fileDescriptorProtoBytes, config.Service, config.Method)
-	if err != nil {
-		return nil, err
-	}
-
 	dispatcher := &Dispatcher{
 		timeout:       configuredTimeout,
-		serviceMethod: fmt.Sprintf("%s/%s", config.Service, config.Method),
+		serviceMethod: fmt.Sprintf("/%s/%s", config.Service, config.Method),
 		endpoint:      config.Endpoint,
 		conn:          conn,
-		responseProto: dynamicpb.NewMessage(messageDescriptor),
 	}
 	return dispatcher, nil
-}
-
-func getReflectionResponse(conn *grpc.ClientConn, serviceName string) (*grpc_reflection_v1alpha.ServerReflectionResponse, error) {
-	// create a reflection client and get FileDescriptorProtos
-	reflectionClient := grpc_reflection_v1alpha.NewServerReflectionClient(conn)
-	req := &grpc_reflection_v1alpha.ServerReflectionRequest{
-		MessageRequest: &grpc_reflection_v1alpha.ServerReflectionRequest_FileContainingSymbol{
-			FileContainingSymbol: serviceName,
-		},
-	}
-	reflectionInfoClient, err := reflectionClient.ServerReflectionInfo(context.Background())
-	if err != nil {
-		return nil, fiberError.NewFiberError(
-			protocol.GRPC,
-			errors.New("grpc dispatcher: unable to get reflection information, ensure server reflection is enable and config are correct"))
-	}
-	if err = reflectionInfoClient.Send(req); err != nil {
-		return nil, fiberError.NewFiberError(protocol.GRPC, err)
-	}
-	reflectionResponse, err := reflectionInfoClient.Recv()
-	if err != nil {
-		return nil, fiberError.NewFiberError(protocol.GRPC, err)
-	}
-
-	return reflectionResponse, nil
-}
-
-func getMessageDescriptor(fileDescriptorProtoBytes [][]byte, serviceName string, methodName string) (protoreflect.MessageDescriptor, error) {
-	fileDescriptorProto, outputProtoName, err := getFileDescriptorProto(fileDescriptorProtoBytes, serviceName, methodName)
-	if err != nil {
-		return nil, err
-	}
-
-	messageDescriptor, err := getMessageDescriptorByName(fileDescriptorProto, outputProtoName)
-	if err != nil {
-		return nil, err
-	}
-	return messageDescriptor, nil
-}
-
-func getFileDescriptorProto(fileDescriptorProtoBytes [][]byte, serviceName string, methodName string) (*descriptorpb.FileDescriptorProto, string, error) {
-	var fileDescriptorProto *descriptorpb.FileDescriptorProto
-	var outputProtoName string
-
-	for _, fdpByte := range fileDescriptorProtoBytes {
-		fdp := &descriptorpb.FileDescriptorProto{}
-		if err := proto.Unmarshal(fdpByte, fdp); err != nil {
-			return nil, "", fiberError.NewFiberError(protocol.GRPC, err)
-		}
-
-		for _, service := range fdp.Service {
-			// find matching service descriptors from file descriptor
-			if serviceName == fmt.Sprintf("%s.%s", fdp.GetPackage(), service.GetName()) {
-				// find matching method from service descriptor
-				for _, method := range service.Method {
-					if method.GetName() == methodName {
-						outputType := method.GetOutputType()
-						//Get the proto name without package
-						outputProtoName = outputType[strings.LastIndex(outputType, ".")+1:]
-						fileDescriptorProto = fdp
-						break
-					}
-				}
-			}
-			if fileDescriptorProto != nil {
-				break
-			}
-		}
-		if fileDescriptorProto != nil {
-			break
-		}
-	}
-
-	if fileDescriptorProto == nil {
-		return nil, "", fiberError.NewFiberError(
-			protocol.GRPC,
-			errors.New("grpc dispatcher: unable to fetch file descriptors, ensure config are correct"))
-	}
-	return fileDescriptorProto, outputProtoName, nil
-}
-
-func getMessageDescriptorByName(fileDescriptorProto *descriptorpb.FileDescriptorProto, outputProtoName string) (protoreflect.MessageDescriptor, error) {
-	// Create a FileDescriptor from FileDescriptorProto, and get MessageDescriptor to create a dynamic message
-	// Note: It might be required to register new proto using protoregistry.Files.RegisterFile() at runtime
-	fileDescriptor, err := protodesc.NewFile(fileDescriptorProto, protoregistry.GlobalFiles)
-	if err != nil {
-		return nil, fiberError.NewFiberError(
-			protocol.GRPC,
-			errors.New("grpc dispatcher: unable to find proto in registry"))
-	}
-	messageDescriptor := fileDescriptor.Messages().ByName(protoreflect.Name(outputProtoName))
-	return messageDescriptor, nil
 }

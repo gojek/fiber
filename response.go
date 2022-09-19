@@ -7,7 +7,7 @@ import (
 
 type Response interface {
 	IsSuccess() bool
-	Payload() interface{}
+	Payload() []byte
 	StatusCode() int
 	BackendName() string
 	WithBackendName(string) Response

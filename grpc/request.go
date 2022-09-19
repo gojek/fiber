@@ -4,20 +4,19 @@ import (
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/proto"
 )
 
 type Request struct {
 	// Metadata will hold the grpc headers for request
 	Metadata metadata.MD
-	Message  proto.Message
+	Message  []byte
 }
 
 func (r *Request) Protocol() protocol.Protocol {
 	return protocol.GRPC
 }
 
-func (r *Request) Payload() interface{} {
+func (r *Request) Payload() []byte {
 	return r.Message
 }
 
@@ -26,9 +25,14 @@ func (r *Request) Header() map[string][]string {
 }
 
 func (r *Request) Clone() (fiber.Request, error) {
+	var copiedMessage []byte
+	if len(r.Message) > 0 {
+		copiedMessage = make([]byte, len(r.Message))
+		copy(copiedMessage, r.Message)
+	}
 	return &Request{
 		Metadata: r.Metadata,
-		Message:  r.Message,
+		Message:  copiedMessage,
 	}, nil
 }
 
