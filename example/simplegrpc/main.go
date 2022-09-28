@@ -14,12 +14,11 @@ import (
 )
 
 const (
-	port1     = 50555
-	port2     = 50556
-	endpoint1 = "localhost:50555"
-	endpoint2 = "localhost:50556"
-	service   = "testproto.UniversalPredictionService"
-	method    = "PredictValues"
+	port1         = 50555
+	port2         = 50556
+	endpoint1     = "localhost:50555"
+	endpoint2     = "localhost:50556"
+	serviceMethod = "testproto.UniversalPredictionService/PredictValues"
 )
 
 func main() {
@@ -36,14 +35,12 @@ func main() {
 	component.SetStrategy(new(extras.RandomRoutingStrategy))
 
 	upiDispatcher1, _ := grpc.NewDispatcher(grpc.DispatcherConfig{
-		Endpoint: endpoint1,
-		Service:  service,
-		Method:   method,
+		Endpoint:      endpoint1,
+		ServiceMethod: serviceMethod,
 	})
 	upiDispatcher2, _ := grpc.NewDispatcher(grpc.DispatcherConfig{
-		Endpoint: endpoint2,
-		Service:  service,
-		Method:   method,
+		Endpoint:      endpoint2,
+		ServiceMethod: serviceMethod,
 	})
 
 	// Caller is required to work with combiner, fanout. Using a dispatcher plainly doesn't work

@@ -85,10 +85,9 @@ func TestFromConfig(t *testing.T) {
 
 	grpcDispatcher, _ := fibergrpc.NewDispatcher(
 		fibergrpc.DispatcherConfig{
-			Service:  "testproto.UniversalPredictionService",
-			Method:   "PredictValues",
-			Endpoint: fmt.Sprintf("localhost:%d", port),
-			Timeout:  timeout,
+			ServiceMethod: "testproto.UniversalPredictionService/PredictValues",
+			Endpoint:      fmt.Sprintf("localhost:%d", port),
+			Timeout:       timeout,
 		})
 	grpcCaller, _ := fiber.NewCaller("proxy_name", grpcDispatcher)
 	grpcProxy := fiber.NewProxy(nil, grpcCaller)
@@ -112,7 +111,7 @@ func TestFromConfig(t *testing.T) {
 		{
 			name:           "grpc proxy",
 			configPath:     "../internal/testdata/config/invalid_grpc_proxy.yaml",
-			expectedErrMsg: "fiber: grpc dispatcher: missing config (endpoint/service/method)",
+			expectedErrMsg: "fiber: grpc dispatcher: missing config (endpoint/serviceMethod)",
 		},
 	}
 

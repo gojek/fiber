@@ -3,5 +3,4 @@ id: proxy_name
 timeout: "20s"
 endpoint: "localhost:50555"
 protocol: "grpC" #intentional to test case-insensitivity
-service: "testproto.UniversalPredictionService"
-method: "PredictValues"
+service_method: "testproto.UniversalPredictionService/PredictValues"

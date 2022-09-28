@@ -24,9 +24,8 @@ import (
 )
 
 const (
-	port    = 50055
-	service = "testproto.UniversalPredictionService"
-	method  = "PredictValues"
+	port          = 50055
+	serviceMethod = "testproto.UniversalPredictionService/PredictValues"
 )
 
 var mockResponse *testproto.PredictValuesResponse
@@ -89,47 +88,33 @@ func TestNewDispatcher(t *testing.T) {
 		{
 			name: "empty endpoint",
 			dispatcherConfig: DispatcherConfig{
-				Service: service,
-				Method:  method,
+				ServiceMethod: serviceMethod,
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
+				errors.New("grpc dispatcher: missing config (endpoint/serviceMethod)")),
 		},
 		{
-			name: "empty service",
+			name: "empty serviceMethod",
 			dispatcherConfig: DispatcherConfig{
-				Method:   method,
 				Endpoint: fmt.Sprintf(":%d", port),
 			},
 			expected: nil,
 			expectedErr: fiberError.ErrInvalidInput(
 				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
-		},
-		{
-			name: "empty method",
-			dispatcherConfig: DispatcherConfig{
-				Service:  service,
-				Endpoint: fmt.Sprintf(":%d", port),
-			},
-			expected: nil,
-			expectedErr: fiberError.ErrInvalidInput(
-				protocol.GRPC,
-				errors.New("grpc dispatcher: missing config (endpoint/service/method)")),
+				errors.New("grpc dispatcher: missing config (endpoint/serviceMethod)")),
 		},
 		{
 			name: "ok response",
 			dispatcherConfig: DispatcherConfig{
-				Service:  service,
-				Method:   method,
-				Endpoint: fmt.Sprintf(":%d", port),
-				Timeout:  time.Second * 5,
+				ServiceMethod: serviceMethod,
+				Endpoint:      fmt.Sprintf(":%d", port),
+				Timeout:       time.Second * 5,
 			},
 			expected: &Dispatcher{
 				timeout:       time.Second * 5,
-				serviceMethod: fmt.Sprintf("/%s/%s", service, method),
+				serviceMethod: fmt.Sprintf("/%s", serviceMethod),
 				endpoint:      fmt.Sprintf(":%d", port),
 			},
 		},
@@ -157,10 +142,9 @@ func TestNewDispatcher(t *testing.T) {
 
 func TestDispatcher_Do(t *testing.T) {
 	dispatcherConfig := DispatcherConfig{
-		Service:  service,
-		Method:   method,
-		Endpoint: fmt.Sprintf(":%d", port),
-		Timeout:  time.Second * 5,
+		ServiceMethod: serviceMethod,
+		Endpoint:      fmt.Sprintf(":%d", port),
+		Timeout:       time.Second * 5,
 	}
 	dispatcher, err := NewDispatcher(dispatcherConfig)
 	require.NoError(t, err, "unable to create dispatcher")

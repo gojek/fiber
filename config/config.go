@@ -178,15 +178,14 @@ func (c *CombinerConfig) initComponent() (fiber.Component, error) {
 // ProxyConfig is used to parse the configuration for a Proxy
 type ProxyConfig struct {
 	ComponentConfig
-	Endpoint string   `json:"endpoint" required:"true"`
-	Timeout  Duration `json:"timeout"`
-	Protocol string   `json:"protocol"`
+	Endpoint string            `json:"endpoint" required:"true"`
+	Timeout  Duration          `json:"timeout"`
+	Protocol protocol.Protocol `json:"protocol"`
 	GrpcConfig
 }
 
 type GrpcConfig struct {
-	Service string `json:"service,omitempty"`
-	Method  string `json:"method,omitempty"`
+	ServiceMethod string `json:"service_method,omitempty"`
 }
 
 func (c *ProxyConfig) initComponent() (fiber.Component, error) {
@@ -194,12 +193,11 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 	var dispatcher fiber.Dispatcher
 	var err error
 	var backend fiber.Backend
-	if strings.EqualFold(c.Protocol, string(protocol.GRPC)) {
+	if strings.EqualFold(string(c.Protocol), string(protocol.GRPC)) {
 		dispatcher, err = grpc.NewDispatcher(grpc.DispatcherConfig{
-			Service:  c.Service,
-			Method:   c.Method,
-			Endpoint: c.Endpoint,
-			Timeout:  time.Duration(c.Timeout),
+			ServiceMethod: c.ServiceMethod,
+			Endpoint:      c.Endpoint,
+			Timeout:       time.Duration(c.Timeout),
 		})
 	} else {
 		httpClient := &http.Client{Timeout: time.Duration(c.Timeout)}

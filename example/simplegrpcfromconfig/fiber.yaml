@@ -7,13 +7,12 @@ routes:
     type: PROXY
     timeout: "20s"
     endpoint: "localhost:50555"
-    service: "testproto.UniversalPredictionService"
-    method: "PredictValues"
+    service_method: "testproto.UniversalPredictionService/PredictValues"
     protocol: "grpc"
   - id: route_b
     type: PROXY
     timeout: "40s"
     endpoint: "localhost:50556"
-    service: "testproto.UniversalPredictionService"
+    service_method: "testproto.UniversalPredictionService/PredictValues"
     method: "PredictValues"
     protocol: "grpc"

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gojek/fiber"
@@ -37,10 +37,9 @@ type Dispatcher struct {
 }
 
 type DispatcherConfig struct {
-	Service  string
-	Method   string
-	Endpoint string
-	Timeout  time.Duration
+	ServiceMethod string
+	Endpoint      string
+	Timeout       time.Duration
 }
 
 func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
@@ -96,11 +95,16 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 		configuredTimeout = config.Timeout
 	}
 
-	if config.Endpoint == "" || config.Service == "" || config.Method == "" {
+	if config.Endpoint == "" || config.ServiceMethod == "" {
 		return nil, fiberError.ErrInvalidInput(
 			protocol.GRPC,
-			errors.New("grpc dispatcher: missing config (endpoint/service/method)"))
+			errors.New("grpc dispatcher: missing config (endpoint/serviceMethod)"))
 	}
+	var serviceMethodStringBuilder strings.Builder
+	if !strings.HasPrefix(config.ServiceMethod, "/") {
+		serviceMethodStringBuilder.WriteString("/")
+	}
+	serviceMethodStringBuilder.WriteString(config.ServiceMethod)
 
 	conn, err := grpc.DialContext(context.Background(), config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -113,7 +117,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 
 	dispatcher := &Dispatcher{
 		timeout:       configuredTimeout,
-		serviceMethod: fmt.Sprintf("/%s/%s", config.Service, config.Method),
+		serviceMethod: serviceMethodStringBuilder.String(),
 		endpoint:      config.Endpoint,
 		conn:          conn,
 	}
