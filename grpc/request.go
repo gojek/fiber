@@ -4,12 +4,22 @@ import (
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 )
 
 type Request struct {
 	// Metadata will hold the grpc headers for request
-	Metadata metadata.MD
-	Message  []byte
+	Metadata     metadata.MD
+	Message      []byte
+	ProtoMessage proto.Message
+}
+
+func NewRequest(metadata metadata.MD, msg []byte, protoMsg proto.Message) *Request {
+	return &Request{
+		Metadata:     metadata,
+		Message:      msg,
+		ProtoMessage: protoMsg,
+	}
 }
 
 func (r *Request) Protocol() protocol.Protocol {
