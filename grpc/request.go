@@ -4,12 +4,22 @@ import (
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/protocol"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
 )
 
 type Request struct {
 	// Metadata will hold the grpc headers for request
 	Metadata metadata.MD
 	Message  []byte
+	Proto    proto.Message
+}
+
+func NewRequest(metadata metadata.MD, msg []byte, protoMsg proto.Message) *Request {
+	return &Request{
+		Metadata: metadata,
+		Message:  msg,
+		Proto:    protoMsg,
+	}
 }
 
 func (r *Request) Protocol() protocol.Protocol {
@@ -25,15 +35,8 @@ func (r *Request) Header() map[string][]string {
 }
 
 func (r *Request) Clone() (fiber.Request, error) {
-	var copiedMessage []byte
-	if len(r.Message) > 0 {
-		copiedMessage = make([]byte, len(r.Message))
-		copy(copiedMessage, r.Message)
-	}
-	return &Request{
-		Metadata: r.Metadata,
-		Message:  copiedMessage,
-	}, nil
+	// for grpc, we'll just return itself (no cloning)
+	return r, nil
 }
 
 // OperationName is naming used in tracing interceptors
@@ -46,4 +49,8 @@ func (r *Request) OperationName() string {
 func (r *Request) Transform(_ fiber.Backend) (fiber.Request, error) {
 	// For grpc implementation, endpoint is init with dispatcher
 	return r, nil
+}
+
+func (r *Request) ProtoMessage() proto.Message {
+	return r.Proto
 }
