@@ -9,16 +9,16 @@ import (
 
 type Request struct {
 	// Metadata will hold the grpc headers for request
-	Metadata     metadata.MD
-	Message      []byte
-	ProtoMessage proto.Message
+	Metadata metadata.MD
+	Message  []byte
+	Proto    proto.Message
 }
 
 func NewRequest(metadata metadata.MD, msg []byte, protoMsg proto.Message) *Request {
 	return &Request{
-		Metadata:     metadata,
-		Message:      msg,
-		ProtoMessage: protoMsg,
+		Metadata: metadata,
+		Message:  msg,
+		Proto:    protoMsg,
 	}
 }
 
@@ -49,4 +49,8 @@ func (r *Request) OperationName() string {
 func (r *Request) Transform(_ fiber.Backend) (fiber.Request, error) {
 	// For grpc implementation, endpoint is init with dispatcher
 	return r, nil
+}
+
+func (r *Request) ProtoMessage() proto.Message {
+	return r.Proto
 }
