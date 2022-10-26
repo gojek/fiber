@@ -11,10 +11,13 @@ type Response interface {
 	StatusCode() int
 	BackendName() string
 	WithBackendName(string) Response
+	Attribute(key string) []string
+	WithAttribute(key string, values ...string) Response
 }
 
 type ErrorResponse struct {
 	*CachedPayload
+	attr    Attributes
 	code    int
 	backend string
 }
@@ -36,6 +39,15 @@ func (resp *ErrorResponse) StatusCode() int {
 	return resp.code
 }
 
+func (resp *ErrorResponse) Attribute(key string) []string {
+	return resp.attr.Attribute(key)
+}
+
+func (resp *ErrorResponse) WithAttribute(key string, values ...string) Response {
+	resp.attr = resp.attr.WithAttribute(key, values...)
+	return resp
+}
+
 func NewErrorResponse(err error) Response {
 	var fiberErr *errors.FiberError
 	if castedError, ok := err.(*errors.FiberError); ok {
@@ -47,5 +59,6 @@ func NewErrorResponse(err error) Response {
 	return &ErrorResponse{
 		CachedPayload: NewCachedPayload(payload),
 		code:          fiberErr.Code,
+		attr:          NewAttributesMap(),
 	}
 }
