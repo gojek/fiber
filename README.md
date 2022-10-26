@@ -271,21 +271,21 @@ func (s *OddEvenRoutingStrategy) SelectRoute(
 	ctx context.Context,
 	req fiber.Request,
 	routes map[string]fiber.Component,
-) (fiber.Component, []fiber.Component, fiber.Attributes, error) {
+) (fiber.Component, []fiber.Component, fiber.Labels, error) {
 	sessionIdStr := ""
 	if sessionHeader, ok := req.Header()["X-Session-ID"]; ok {
 		sessionIdStr = sessionHeader[0]
 	}
     // Metadata that can be propagated upstream for logging / debugging
-    attr := fiber.NewAttributesMap()
+    labels := fiber.NewLabelsMap()
 	
 	if sessionID, err := strconv.Atoi(sessionIdStr); err != nil {
 		return nil, nil, err
 	} else {
 		if sessionID % 2 != 0 {
-			return routes["route-a"], []fiber.Component{}, attr.WithAttribute("Match-Type", "even"), nil
+			return routes["route-a"], []fiber.Component{}, labels.WithLabel("Match-Type", "even"), nil
 		} else {
-			return routes["route-b"], []fiber.Component{}, attr.WithAttribute("Match-Type", "odd"), nil
+			return routes["route-b"], []fiber.Component{}, labels.WithLabel("Match-Type", "odd"), nil
 		}
 	}
 }

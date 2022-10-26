@@ -27,22 +27,22 @@ func (r *Response) StatusCode() int {
 	return int(r.Status.Code())
 }
 
-// Attribute returns all the values associated with the given key, in the response metadata.
+// Label returns all the values associated with the given key, in the response metadata.
 // If the key does not exist, an empty slice will be returned.
-func (r *Response) Attribute(key string) []string {
+func (r *Response) Label(key string) []string {
 	return r.Metadata.Get(key)
 }
 
-// WithAttribute appends the given value(s) to the key, in the response metadata.
+// WithLabel appends the given value(s) to the key, in the response metadata.
 // If the key does not already exist, a new key will be created.
 // The modified response is returned.
-func (r *Response) WithAttribute(key string, values ...string) fiber.Response {
+func (r *Response) WithLabel(key string, values ...string) fiber.Response {
 	r.Metadata.Append(key, values...)
 	return r
 }
 
 func (r *Response) BackendName() string {
-	return strings.Join(r.Attribute("backend"), ",")
+	return strings.Join(r.Label("backend"), ",")
 }
 
 // WithBackendName sets the given backend name in the response metadata.

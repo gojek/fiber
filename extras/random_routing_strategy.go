@@ -20,10 +20,10 @@ func (s *RandomRoutingStrategy) SelectRoute(
 	_ context.Context,
 	_ fiber.Request,
 	routes map[string]fiber.Component,
-) (route fiber.Component, fallbacks []fiber.Component, attr fiber.Attributes, err error) {
+) (route fiber.Component, fallbacks []fiber.Component, labels fiber.Labels, err error) {
 	idx := rand.Intn(len(routes))
 	// Add idx to attribute map for logging / debugging upstream
-	attr = fiber.NewAttributesMap().WithAttribute("idx", strconv.Itoa(idx))
+	labels = fiber.NewLabelsMap().WithLabel("idx", strconv.Itoa(idx))
 
 	for _, child := range routes {
 		if idx == 0 {
@@ -33,5 +33,5 @@ func (s *RandomRoutingStrategy) SelectRoute(
 		}
 		idx--
 	}
-	return route, fallbacks, attr, nil
+	return route, fallbacks, labels, nil
 }

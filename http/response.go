@@ -23,16 +23,16 @@ func (r *Response) IsSuccess() bool {
 	return isSuccessStatus(r.StatusCode())
 }
 
-// Attribute returns all the values associated with the given key, in the response header.
+// Label returns all the values associated with the given key, in the response header.
 // If the key does not exist, an empty slice will be returned.
-func (r *Response) Attribute(key string) []string {
+func (r *Response) Label(key string) []string {
 	return r.Header().Values(key)
 }
 
-// WithAttribute appends the given value(s) to the key, in the response header.
+// WithLabel appends the given value(s) to the key, in the response header.
 // If the key does not already exist, a new key will be created.
 // The modified response is returned.
-func (r *Response) WithAttribute(key string, values ...string) fiber.Response {
+func (r *Response) WithLabel(key string, values ...string) fiber.Response {
 	for _, value := range values {
 		r.Header().Add(key, value)
 	}
@@ -41,7 +41,7 @@ func (r *Response) WithAttribute(key string, values ...string) fiber.Response {
 
 // BackendName returns the backend used to make the request
 func (r *Response) BackendName() string {
-	return strings.Join(r.Attribute(headerBackendName), ",")
+	return strings.Join(r.Label(headerBackendName), ",")
 }
 
 // WithBackendName sets the given backend name in the response header.

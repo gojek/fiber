@@ -11,7 +11,7 @@ type RoutingStrategy interface {
 	SelectRoute(ctx context.Context,
 		req Request,
 		routes map[string]Component,
-	) (route Component, fallbacks []Component, attr Attributes, err error)
+	) (route Component, fallbacks []Component, labels Labels, err error)
 }
 
 type baseRoutingStrategy struct {
