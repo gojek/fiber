@@ -3,6 +3,7 @@ package extras
 import (
 	"context"
 	"math/rand"
+	"strconv"
 
 	"github.com/gojek/fiber"
 )
@@ -19,8 +20,11 @@ func (s *RandomRoutingStrategy) SelectRoute(
 	_ context.Context,
 	_ fiber.Request,
 	routes map[string]fiber.Component,
-) (route fiber.Component, fallbacks []fiber.Component, err error) {
+) (route fiber.Component, fallbacks []fiber.Component, attr fiber.Attributes, err error) {
 	idx := rand.Intn(len(routes))
+	// Add idx to attribute map for logging / debugging upstream
+	attr = fiber.NewAttributesMap().WithAttribute("idx", strconv.Itoa(idx))
+
 	for _, child := range routes {
 		if idx == 0 {
 			route = child
@@ -29,5 +33,5 @@ func (s *RandomRoutingStrategy) SelectRoute(
 		}
 		idx--
 	}
-	return route, fallbacks, nil
+	return route, fallbacks, attr, nil
 }

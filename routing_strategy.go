@@ -11,7 +11,7 @@ type RoutingStrategy interface {
 	SelectRoute(ctx context.Context,
 		req Request,
 		routes map[string]Component,
-	) (route Component, fallbacks []Component, err error)
+	) (route Component, fallbacks []Component, attr Attributes, err error)
 }
 
 type baseRoutingStrategy struct {
@@ -28,7 +28,7 @@ func (s *baseRoutingStrategy) getRoutesOrder(
 	errCh := make(chan error, 1)
 
 	go func() {
-		route, fallbacks, err := s.SelectRoute(ctx, req, routes)
+		route, fallbacks, _, err := s.SelectRoute(ctx, req, routes)
 
 		if err != nil {
 			errCh <- err
