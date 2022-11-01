@@ -39,6 +39,17 @@ func (r *Response) WithLabel(key string, values ...string) fiber.Response {
 	return r
 }
 
+// WithLabels does the same thing as WithLabel but over a collection of key-values.
+func (r *Response) WithLabels(labels fiber.Labels) fiber.Response {
+	for _, key := range labels.Keys() {
+		values := labels.Label(key)
+		for _, value := range values {
+			r.Header().Add(key, value)
+		}
+	}
+	return r
+}
+
 // BackendName returns the backend used to make the request
 func (r *Response) BackendName() string {
 	return strings.Join(r.Label(headerBackendName), ",")

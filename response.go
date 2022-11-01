@@ -13,6 +13,7 @@ type Response interface {
 	WithBackendName(string) Response
 	Label(key string) []string
 	WithLabel(key string, values ...string) Response
+	WithLabels(Labels) Response
 }
 
 type ErrorResponse struct {
@@ -45,6 +46,13 @@ func (resp *ErrorResponse) Label(key string) []string {
 
 func (resp *ErrorResponse) WithLabel(key string, values ...string) Response {
 	resp.labels = resp.labels.WithLabel(key, values...)
+	return resp
+}
+
+func (resp *ErrorResponse) WithLabels(labels Labels) Response {
+	for _, key := range labels.Keys() {
+		resp.labels = resp.labels.WithLabel(key, labels.Label(key)...)
+	}
 	return resp
 }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
@@ -78,15 +79,16 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	// Set up three http and grpc server with fix response for test
-	runTestHttpServer(httpAddr1, httpResponse1, 0)
-	runTestHttpServer(httpAddr2, httpResponse2, 0)
-	runTestHttpServer(httpAddr3, httpResponse3, 10)
+	// Set up three grpc and http server with fix response for test.
+	// Third routes will be set to timeout intentionally.
 
-	// Third routes will be set to timeout intentionally
 	runTestGrpcServer(grpcPort1, grpcResponse1, 0)
 	runTestGrpcServer(grpcPort2, grpcResponse2, 0)
 	runTestGrpcServer(grpcPort3, grpcResponse3, 10)
+
+	runTestHttpServer(httpAddr1, httpResponse1, 0)
+	runTestHttpServer(httpAddr2, httpResponse2, 0)
+	runTestHttpServer(httpAddr3, httpResponse3, 10)
 
 	os.Exit(m.Run())
 }
@@ -158,9 +160,10 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder:          []string{route1, route2, route3},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse1,
-			expectedResponse: &grpc.Response{
-				Status: *status.New(codes.OK, "Success"),
-			},
+			expectedResponse: (&grpc.Response{
+				Status:   *status.New(codes.OK, "Success"),
+				Metadata: metadata.New(map[string]string{}),
+			}).WithLabel("order", []string{route1, route2, route3}...),
 		},
 		{
 			name:        "http route 1",
@@ -172,7 +175,7 @@ func TestE2EFromConfig(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body:       makeBody(httpResponse1),
 				},
-			),
+			).WithLabel("order", []string{route1, route2, route3}...),
 		},
 		{
 			name:                 "grpc route 2",
@@ -180,9 +183,10 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder:          []string{route2, route1, route3},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse2,
-			expectedResponse: &grpc.Response{
-				Status: *status.New(codes.OK, "Success"),
-			},
+			expectedResponse: (&grpc.Response{
+				Status:   *status.New(codes.OK, "Success"),
+				Metadata: metadata.New(map[string]string{}),
+			}).WithLabel("order", []string{route2, route1, route3}...),
 		},
 		{
 			name:        "http route 2",
@@ -194,7 +198,7 @@ func TestE2EFromConfig(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body:       makeBody(httpResponse2),
 				},
-			),
+			).WithLabel("order", []string{route2, route1, route3}...),
 		},
 		{
 			name:                 "grpc route3 timeout, route 1 fallback returned",
@@ -202,9 +206,10 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder:          []string{route3, route1, route2},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse1,
-			expectedResponse: &grpc.Response{
-				Status: *status.New(codes.OK, "Success"),
-			},
+			expectedResponse: (&grpc.Response{
+				Status:   *status.New(codes.OK, "Success"),
+				Metadata: metadata.New(map[string]string{}),
+			}).WithLabel("order", []string{route3, route1, route2}...),
 		},
 		{
 			name:        "http route3 timeout, route 1 fallback returned",
@@ -216,7 +221,7 @@ func TestE2EFromConfig(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body:       makeBody(httpResponse1),
 				},
-			),
+			).WithLabel("order", []string{route3, route1, route2}...),
 		},
 		{
 			name:                 "grpc route3 timeout, route 2 fallback returned",
@@ -224,9 +229,10 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder:          []string{route3, route2, route1},
 			request:              grpcRequest,
 			expectedMessageProto: grpcResponse2,
-			expectedResponse: &grpc.Response{
-				Status: *status.New(codes.OK, "Success"),
-			},
+			expectedResponse: (&grpc.Response{
+				Status:   *status.New(codes.OK, "Success"),
+				Metadata: metadata.New(map[string]string{}),
+			}).WithLabel("order", []string{route3, route2, route1}...),
 		},
 		{
 			name:        "http route3 timeout, route 2 fallback returned",
@@ -238,7 +244,7 @@ func TestE2EFromConfig(t *testing.T) {
 					StatusCode: http.StatusOK,
 					Body:       makeBody(httpResponse2),
 				},
-			),
+			).WithLabel("order", []string{route3, route2, route1}...),
 		},
 		{
 			name:        "grpc route3 timeout",
@@ -248,18 +254,23 @@ func TestE2EFromConfig(t *testing.T) {
 			expectedResponse: &grpc.Response{
 				Status: *status.New(codes.Unavailable, ""),
 			},
-			expectedFiberErr: fiber.NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.GRPC)),
+			expectedFiberErr: fiber.
+				NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.GRPC)).
+				WithLabel("order", []string{route3}...),
 		},
 		{
-			name:             "http route3 timeout",
-			configPath:       "./fiberhttp.yaml",
-			routesOrder:      []string{route3},
-			request:          httpRequest,
-			expectedFiberErr: fiber.NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.HTTP)),
+			name:        "http route3 timeout",
+			configPath:  "./fiberhttp.yaml",
+			routesOrder: []string{route3},
+			request:     httpRequest,
+			expectedFiberErr: fiber.
+				NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.HTTP)).
+				WithLabel("order", []string{route3}...),
 		},
 	}
 
 	for _, tt := range tests {
+		tt := tt // Capture the variable for parallelizing the tests correctly
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -269,6 +280,7 @@ func TestE2EFromConfig(t *testing.T) {
 			require.True(t, ok)
 
 			// Orchestrate route order with mock strategy to fix the order of routes for testing
+			t.Logf("Routes Order: %v %v", tt.name, tt.routesOrder)
 			strategy := testutils.NewMockRoutingStrategy(
 				router.GetRoutes(),
 				tt.routesOrder,
@@ -280,9 +292,12 @@ func TestE2EFromConfig(t *testing.T) {
 			resp, ok := <-router.Dispatch(context.Background(), tt.request).Iter()
 			require.True(t, ok)
 
+			var finalResp fiber.Response
 			if tt.expectedFiberErr != nil {
+				finalResp = tt.expectedFiberErr
 				assert.EqualValues(t, tt.expectedFiberErr, resp)
 			} else {
+				finalResp = tt.expectedResponse
 				require.Equal(t, resp.StatusCode(), tt.expectedResponse.StatusCode())
 				if tt.request.Protocol() == protocol.GRPC {
 					responseProto := &testproto.PredictValuesResponse{}
@@ -294,6 +309,8 @@ func TestE2EFromConfig(t *testing.T) {
 					assert.Equal(t, tt.expectedResponse.Payload(), resp.Payload())
 				}
 			}
+			// Verify that the labels were correctly set, for both success and failure response
+			assert.Equal(t, finalResp.Label("order"), resp.Label("order"))
 		})
 	}
 }

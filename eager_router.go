@@ -63,7 +63,7 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 ) Response {
 	// use routing strategy to fetch primary route and fallbacks
 	// publish the ordered routes into a channel
-	routesOrderCh, errCh := fanIn.strategy.getRoutesOrder(ctx, req, fanIn.router.GetRoutes())
+	routesOrderCh := fanIn.strategy.getRoutesOrder(ctx, req, fanIn.router.GetRoutes())
 
 	out := make(chan Response, 1)
 	go func() {
@@ -76,6 +76,9 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 			// routes, ordered according to their priority
 			// would be initialized from a routesOrderCh channel
 			routes []Component
+
+			// response labels
+			labels Labels = NewLabelsMap()
 
 			// index of current primary route
 			currentRouteIdx int
@@ -93,17 +96,16 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 				} else {
 					responseCh = nil
 				}
-			case orderedRoutes, ok := <-routesOrderCh:
+			case routesOrderResponse, ok := <-routesOrderCh:
 				if ok {
-					routes = orderedRoutes
+					labels = routesOrderResponse.Labels
+					if routesOrderResponse.Err != nil {
+						masterResponse = NewErrorResponse(errors.NewFiberError(req.Protocol(), routesOrderResponse.Err))
+					} else {
+						routes = routesOrderResponse.Components
+					}
 				} else {
 					routesOrderCh = nil
-				}
-			case err, ok := <-errCh:
-				if ok {
-					masterResponse = NewErrorResponse(errors.NewFiberError(req.Protocol(), err))
-				} else {
-					errCh = nil
 				}
 			case <-ctx.Done():
 				if routes == nil {
@@ -139,7 +141,7 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 				}
 			}
 		}
-		out <- masterResponse
+		out <- masterResponse.WithLabels(labels)
 	}()
 
 	return <-out
