@@ -41,8 +41,11 @@ func (*FiberCodec) Name() string {
 }
 
 func (fc *FiberCodec) getDefaultCodec() encoding.Codec {
-	if fc.defaultCodec == nil {
-		fc.defaultCodec = encoding.GetCodec("proto")
-	}
 	return fc.defaultCodec
+}
+
+func NewFiberCodec() *FiberCodec {
+	return &FiberCodec{
+		defaultCodec: encoding.GetCodec("proto"),
+	}
 }
