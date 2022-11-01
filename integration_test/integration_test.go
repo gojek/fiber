@@ -270,7 +270,7 @@ func TestE2EFromConfig(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture the variable for parallelizing the tests correctly
+		tt := tt // Capture range variable locally for parallelizing the tests
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -280,7 +280,6 @@ func TestE2EFromConfig(t *testing.T) {
 			require.True(t, ok)
 
 			// Orchestrate route order with mock strategy to fix the order of routes for testing
-			t.Logf("Routes Order: %v %v", tt.name, tt.routesOrder)
 			strategy := testutils.NewMockRoutingStrategy(
 				router.GetRoutes(),
 				tt.routesOrder,
