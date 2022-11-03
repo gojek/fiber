@@ -75,7 +75,7 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 			for _, route := range routes {
 				copyReq, _ := req.Clone()
 				responses := make([]Response, 0)
-				responseCh := route.Dispatch(ctx, copyReq).Iter()
+				responseCh := route.Dispatch(context.WithValue(ctx, CtxComponentLabelsKey, labels), copyReq).Iter()
 				ok := true
 				for ok {
 					select {
