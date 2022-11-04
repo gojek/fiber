@@ -64,6 +64,24 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			timeout: 100 * time.Millisecond,
 		},
 		{
+			name: "error: no route succeeded",
+			routes: map[string]fiber.Component{
+				"route-a": testutils.NewMockComponent(
+					"route-a",
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))}),
+				"route-b": testutils.NewMockComponent(
+					"route-b",
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "B-NOK", nil, nil)}),
+			},
+			strategy: []string{
+				"route-a", "route-b",
+			},
+			expected: []fiber.Response{
+				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(protocol.HTTP)),
+			},
+			timeout: 100 * time.Millisecond,
+		},
+		{
 			name: "error: routing strategy succeeded, but route timeout exceeded",
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(

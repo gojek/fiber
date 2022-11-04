@@ -98,9 +98,8 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 					}
 				}
 			}
-		} else {
-			out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol())).WithLabels(labels)
 		}
+		out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol())).WithLabels(labels)
 	}()
 
 	return queue
