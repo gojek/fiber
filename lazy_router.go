@@ -50,25 +50,24 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 		defer close(out)
 
 		var routes []Component
-		routesOrderCh, errCh := r.strategy.getRoutesOrder(ctx, req, r.routes)
-		for routesOrderCh != nil || errCh != nil {
-			select {
-			case orderedRoutes, ok := <-routesOrderCh:
-				if ok {
-					routes = orderedRoutes
-				} else {
-					routesOrderCh = nil
-				}
-			case err, ok := <-errCh:
-				if ok {
-					out <- NewErrorResponse(errors.NewFiberError(req.Protocol(), err))
+		var labels Labels = NewLabelsMap()
+
+		routesOrderCh := r.strategy.getRoutesOrder(ctx, req, r.routes)
+
+		select {
+		case routesOrderResponse, ok := <-routesOrderCh:
+			if ok {
+				labels = routesOrderResponse.Labels
+				if routesOrderResponse.Err != nil {
+					out <- NewErrorResponse(errors.NewFiberError(req.Protocol(), routesOrderResponse.Err)).WithLabels(labels)
 					return
+				} else {
+					routes = routesOrderResponse.Components
 				}
-				errCh = nil
-			case <-ctx.Done():
-				out <- NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol()))
-				return
 			}
+		case <-ctx.Done():
+			out <- NewErrorResponse(errors.ErrRouterStrategyTimeoutExceeded(req.Protocol())).WithLabels(labels)
+			return
 		}
 
 		if len(routes) > 0 {
@@ -76,7 +75,7 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 			for _, route := range routes {
 				copyReq, _ := req.Clone()
 				responses := make([]Response, 0)
-				responseCh := route.Dispatch(ctx, copyReq).Iter()
+				responseCh := route.Dispatch(context.WithValue(ctx, CtxComponentLabelsKey, labels), copyReq).Iter()
 				ok := true
 				for ok {
 					select {
@@ -89,19 +88,18 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 							// all responseQueue from selected route are ok, sending them back to output
 							// and breaking a cycle over other routes
 							for _, resp := range responses {
-								out <- resp
+								out <- resp.WithLabels(labels)
 							}
 							return
 						}
 					case <-ctx.Done():
-						out <- NewErrorResponse(errors.ErrRequestTimeout(req.Protocol()))
+						out <- NewErrorResponse(errors.ErrRequestTimeout(req.Protocol())).WithLabels(labels)
 						return
 					}
 				}
 			}
-		} else {
-			out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol()))
 		}
+		out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol())).WithLabels(labels)
 	}()
 
 	return queue

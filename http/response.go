@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gojek/fiber"
 	"github.com/gojek/fiber/errors"
@@ -22,17 +23,43 @@ func (r *Response) IsSuccess() bool {
 	return isSuccessStatus(r.StatusCode())
 }
 
-func (r *Response) WithBackendName(backEnd string) fiber.Response {
-	r.Header().Set(headerBackendName, backEnd)
+// Label returns all the values associated with the given key, in the response header.
+// If the key does not exist, an empty slice will be returned.
+func (r *Response) Label(key string) []string {
+	return r.Header().Values(key)
+}
+
+// WithLabel appends the given value(s) to the key, in the response header.
+// If the key does not already exist, a new key will be created.
+// The modified response is returned.
+func (r *Response) WithLabel(key string, values ...string) fiber.Response {
+	for _, value := range values {
+		r.Header().Add(key, value)
+	}
+	return r
+}
+
+// WithLabels does the same thing as WithLabel but over a collection of key-values.
+func (r *Response) WithLabels(labels fiber.Labels) fiber.Response {
+	for _, key := range labels.Keys() {
+		values := labels.Label(key)
+		for _, value := range values {
+			r.Header().Add(key, value)
+		}
+	}
 	return r
 }
 
 // BackendName returns the backend used to make the request
 func (r *Response) BackendName() string {
-	if r.Header() == nil {
-		r.response.Header = make(http.Header)
-	}
-	return r.Header().Get(headerBackendName)
+	return strings.Join(r.Label(headerBackendName), ",")
+}
+
+// WithBackendName sets the given backend name in the response header.
+// The modified response is returned.
+func (r *Response) WithBackendName(backEnd string) fiber.Response {
+	r.Header().Set(headerBackendName, backEnd)
+	return r
 }
 
 // StatusCode returns the response status code

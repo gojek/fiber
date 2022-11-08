@@ -11,7 +11,7 @@ type RoutingStrategy interface {
 	SelectRoute(ctx context.Context,
 		req Request,
 		routes map[string]Component,
-	) (route Component, fallbacks []Component, err error)
+	) (route Component, fallbacks []Component, labels Labels, err error)
 }
 
 type baseRoutingStrategy struct {
@@ -19,31 +19,34 @@ type baseRoutingStrategy struct {
 	BaseFiberType
 }
 
+type routesOrderResponse struct {
+	Components []Component
+	Labels     Labels
+	Err        error
+}
+
 func (s *baseRoutingStrategy) getRoutesOrder(
 	ctx context.Context,
 	req Request,
 	routes map[string]Component,
-) (<-chan []Component, <-chan error) {
-	out := make(chan []Component)
-	errCh := make(chan error, 1)
+) <-chan routesOrderResponse {
+	out := make(chan routesOrderResponse)
 
 	go func() {
-		route, fallbacks, err := s.SelectRoute(ctx, req, routes)
+		route, fallbacks, labels, err := s.SelectRoute(ctx, req, routes)
 
-		if err != nil {
-			errCh <- err
-		} else {
-			// Append routes
-			routes := fallbacks
-			if route != nil {
-				routes = append([]Component{route}, routes...)
-			}
-			out <- routes
+		// Combine preferred route with the fallbacks
+		routes := fallbacks
+		if route != nil {
+			routes = append([]Component{route}, routes...)
 		}
-		// Close both channels
-		close(out)
-		close(errCh)
+
+		out <- routesOrderResponse{
+			Components: routes,
+			Err:        err,
+			Labels:     labels,
+		}
 	}()
 
-	return out, errCh
+	return out
 }

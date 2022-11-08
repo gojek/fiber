@@ -12,6 +12,8 @@ var (
 	CtxComponentIDKey CtxKey = "CTX_COMPONENT_ID"
 	// CtxComponentKindKey is used to denote the component's kind in the request context
 	CtxComponentKindKey CtxKey = "CTX_COMPONENT_KIND"
+	// CtxComponentLabelsKey is used to denote the component's labels in the request context
+	CtxComponentLabelsKey CtxKey = "CTX_COMPONENT_LABELS"
 )
 
 // Interceptor is the interface for a structural interceptor
