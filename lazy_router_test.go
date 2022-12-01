@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gojek/fiber/extras"
+	"strings"
 	"testing"
 	"time"
 
@@ -165,6 +167,69 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 				assert.Equal(t, tt.expected[i].StatusCode(), received[i].StatusCode(), tt.name)
 			}
 			strategy.AssertExpectations(t)
+		})
+	}
+}
+
+// This test uses RandomRoutingStrategy which will always append context of idx
+// Labels should be preserved for fiber.CtxComponentLabelsKey context key
+func TestLazyRouter_Dispatch_Labels(t *testing.T) {
+	tests := []struct {
+		name          string
+		context       context.Context
+		labelKey      string
+		expectedLabel string
+	}{
+		{
+			name:          "new label",
+			context:       context.Background(),
+			labelKey:      "idx",
+			expectedLabel: "0",
+		},
+		{
+			name:          "overwritten label",
+			context:       context.WithValue(context.Background(), "idx", "111"),
+			labelKey:      "idx",
+			expectedLabel: "0",
+		},
+		{
+			name:          "existing label not preserved",
+			context:       context.WithValue(context.Background(), "t", "11"),
+			labelKey:      "t",
+			expectedLabel: "",
+		},
+		{
+			name:          "existing label preserved",
+			context:       context.WithValue(context.Background(), fiber.CtxComponentLabelsKey, fiber.NewLabelsMap().WithLabel("t", "11")),
+			labelKey:      "t",
+			expectedLabel: "11",
+		},
+		{
+			name:          "existing label not preserved, unexpected value type",
+			context:       context.WithValue(context.Background(), fiber.CtxComponentLabelsKey, "11"),
+			labelKey:      "t",
+			expectedLabel: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			router := fiber.NewLazyRouter("lazy-router")
+			routes := map[string]fiber.Component{
+				"route-a": testutils.NewMockComponent(
+					"route-a",
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "A-OK", nil, nil)}),
+			}
+			router.SetRoutes(routes)
+			router.SetStrategy(new(extras.RandomRoutingStrategy))
+
+			ctx := tt.context
+
+			request := testUtilsHttp.MockReq("POST", "http://localhost:8080/lazy-router", "payload")
+			resp, ok := <-router.Dispatch(ctx, request).Iter()
+			assert.True(t, ok)
+			label := strings.Join(resp.Label(tt.labelKey), ",")
+			assert.Equal(t, tt.expectedLabel, label)
 		})
 	}
 }

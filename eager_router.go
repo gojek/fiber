@@ -78,7 +78,7 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 			routes []Component
 
 			// response labels
-			labels Labels = NewLabelsMap()
+			labels Labels
 
 			// index of current primary route
 			currentRouteIdx int
@@ -87,6 +87,13 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 
 			masterResponse Response
 		)
+
+		labelMap, ok := ctx.Value(CtxComponentLabelsKey).(Labels)
+		if ok {
+			labels = labelMap
+		} else {
+			labels = NewLabelsMap()
+		}
 
 		for masterResponse == nil {
 			select {
@@ -98,7 +105,11 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 				}
 			case routesOrderResponse, ok := <-routesOrderCh:
 				if ok {
-					labels = routesOrderResponse.Labels
+					//Overwrite parent labels with strategy labels
+					for _, key := range routesOrderResponse.Labels.Keys() {
+						labels.WithLabel(key, routesOrderResponse.Labels.Label(key)...)
+					}
+
 					if routesOrderResponse.Err != nil {
 						masterResponse = NewErrorResponse(errors.NewFiberError(req.Protocol(), routesOrderResponse.Err))
 					} else {

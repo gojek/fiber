@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/util"
@@ -50,14 +51,27 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 		defer close(out)
 
 		var routes []Component
-		var labels Labels = NewLabelsMap()
+		var labels Labels
+
+		abc := ctx.Value(CtxComponentLabelsKey)
+		fmt.Println(abc)
+		labelMap, ok := ctx.Value(CtxComponentLabelsKey).(Labels)
+		if ok {
+			labels = labelMap
+		} else {
+			labels = NewLabelsMap()
+		}
 
 		routesOrderCh := r.strategy.getRoutesOrder(ctx, req, r.routes)
 
 		select {
 		case routesOrderResponse, ok := <-routesOrderCh:
 			if ok {
-				labels = routesOrderResponse.Labels
+				//Overwrite parent labels with strategy labels
+				for _, key := range routesOrderResponse.Labels.Keys() {
+					labels.WithLabel(key, routesOrderResponse.Labels.Label(key)...)
+				}
+
 				if routesOrderResponse.Err != nil {
 					out <- NewErrorResponse(errors.NewFiberError(req.Protocol(), routesOrderResponse.Err)).WithLabels(labels)
 					return
