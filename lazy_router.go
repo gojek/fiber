@@ -2,8 +2,6 @@ package fiber
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/util"
 )
@@ -53,8 +51,6 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 		var routes []Component
 		var labels Labels
 
-		abc := ctx.Value(CtxComponentLabelsKey)
-		fmt.Println(abc)
 		labelMap, ok := ctx.Value(CtxComponentLabelsKey).(Labels)
 		if ok {
 			labels = labelMap
