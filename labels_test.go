@@ -2,14 +2,14 @@ package fiber_test
 
 import (
 	"context"
-	"github.com/gojek/fiber/extras"
-	"github.com/gojek/fiber/internal/testutils"
-	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/gojek/fiber"
+	"github.com/gojek/fiber/extras"
+	"github.com/gojek/fiber/internal/testutils"
+	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 )
 
