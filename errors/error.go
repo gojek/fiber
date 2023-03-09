@@ -50,7 +50,7 @@ var (
 	}
 
 	// ErrRouterStrategyReturnedEmptyRoutes is a FiberError that's returned when
-	// the routing strategy routing strategy returns an empty routes list
+	// the routing strategy returns an empty routes list
 	ErrRouterStrategyReturnedEmptyRoutes = func(protocol protocol.Protocol) *FiberError {
 		statusCode := http.StatusNotFound
 		if protocol == "GRPC" {
@@ -62,16 +62,16 @@ var (
 		}
 	}
 
-	// ErrServiceUnavailable is a FiberError that's returned when
+	// ErrNoValidResponseFromRoutes is a FiberError that's returned when
 	// none of the routes in the routing strategy return a valid response
-	ErrServiceUnavailable = func(protocol protocol.Protocol) *FiberError {
-		statusCode := http.StatusServiceUnavailable
+	ErrNoValidResponseFromRoutes = func(protocol protocol.Protocol) *FiberError {
+		statusCode := http.StatusInternalServerError
 		if protocol == "GRPC" {
-			statusCode = int(codes.Unavailable)
+			statusCode = int(codes.Internal)
 		}
 		return &FiberError{
 			Code:    statusCode,
-			Message: "fiber: no responses received",
+			Message: "fiber: no valid responses received from routes",
 		}
 	}
 

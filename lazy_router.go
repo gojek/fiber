@@ -2,6 +2,7 @@ package fiber
 
 import (
 	"context"
+
 	"github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/util"
 )
@@ -108,8 +109,12 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 					}
 				}
 			}
+			// if there are no valid response from all routes
+			out <- NewErrorResponse(errors.ErrNoValidResponseFromRoutes(req.Protocol()))
+		} else {
+			// if no routes returned from strategy, return error
+			out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol())).WithLabels(labels)
 		}
-		out <- NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol())).WithLabels(labels)
 	}()
 
 	return queue
