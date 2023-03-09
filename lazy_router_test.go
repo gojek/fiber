@@ -77,7 +77,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 				"route-a", "route-b",
 			},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)),
+				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},
