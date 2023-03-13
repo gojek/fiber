@@ -252,7 +252,7 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder: []string{route3},
 			request:     grpcRequest,
 			expectedResponse: &grpc.Response{
-				Status: *status.New(codes.Internal, ""),
+				Status: *status.New(codes.Unavailable, ""),
 			},
 			expectedFiberErr: fiber.
 				NewErrorResponse(fiberError.ErrNoValidResponseFromRoutes(protocol.GRPC)).

@@ -65,9 +65,9 @@ var (
 	// ErrNoValidResponseFromRoutes is a FiberError that's returned when
 	// none of the routes in the routing strategy return a valid response
 	ErrNoValidResponseFromRoutes = func(protocol protocol.Protocol) *FiberError {
-		statusCode := http.StatusInternalServerError
+		statusCode := http.StatusBadGateway
 		if protocol == "GRPC" {
-			statusCode = int(codes.Internal)
+			statusCode = int(codes.Unavailable)
 		}
 		return &FiberError{
 			Code:    statusCode,

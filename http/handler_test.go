@@ -92,11 +92,11 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			request:   newHTTPRequest("POST", "localhost:8080/handler", http.NoBody),
 			responses: []testUtilsHttp.DelayedResponse{},
 			expected: &http.Response{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusBadGateway,
 				Header:     http.Header{},
 				Body: makeBody([]byte(
 					`{
-  "code": 500,
+  "code": 502,
   "error": "fiber: no valid responses received from routes"
 }`)),
 			},
