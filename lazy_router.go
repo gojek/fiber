@@ -50,25 +50,14 @@ func (r *LazyRouter) Dispatch(ctx context.Context, req Request) ResponseQueue {
 		defer close(out)
 
 		var routes []Component
-		var labels Labels
-
-		labelMap, ok := ctx.Value(CtxComponentLabelsKey).(Labels)
-		if ok {
-			labels = labelMap
-		} else {
-			labels = NewLabelsMap()
-		}
+		var labels Labels = NewLabelsMap()
 
 		routesOrderCh := r.strategy.getRoutesOrder(ctx, req, r.routes)
 
 		select {
 		case routesOrderResponse, ok := <-routesOrderCh:
 			if ok {
-				//Overwrite parent labels with strategy labels
-				for _, key := range routesOrderResponse.Labels.Keys() {
-					labels.WithLabel(key, routesOrderResponse.Labels.Label(key)...)
-				}
-
+				labels = routesOrderResponse.Labels
 				if routesOrderResponse.Err != nil {
 					out <- NewErrorResponse(errors.NewFiberError(req.Protocol(), routesOrderResponse.Err)).WithLabels(labels)
 					return

@@ -1,15 +1,10 @@
 package fiber_test
 
 import (
-	"context"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/gojek/fiber"
-	"github.com/gojek/fiber/extras"
-	"github.com/gojek/fiber/internal/testutils"
-	testUtilsHttp "github.com/gojek/fiber/internal/testutils/http"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,87 +86,6 @@ func TestLabelsMapLabel(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			values := tt.data.Label(tt.key)
 			assert.Equal(t, tt.expected, values)
-		})
-	}
-}
-
-// This test uses RandomRoutingStrategy which will always append context of idx
-// Labels should be preserved for fiber.CtxComponentLabelsKey context key
-func Test_Router_Dispatch_Labels(t *testing.T) {
-	lazyRouter := fiber.NewLazyRouter("lazy-router")
-	lazyRouter.SetStrategy(new(extras.RandomRoutingStrategy))
-
-	eagerRouter := fiber.NewEagerRouter("eager-router")
-	eagerRouter.SetStrategy(new(extras.RandomRoutingStrategy))
-
-	testRouters := []fiber.MultiRouteComponent{eagerRouter, lazyRouter}
-
-	tests := []struct {
-		name               string
-		initialLabelKey    any
-		initialLabelValue  any
-		expectedLabelKey   string
-		expectedLabelValue string
-		router             []fiber.MultiRouteComponent
-	}{
-		{
-			name:               "new label",
-			expectedLabelKey:   "idx",
-			expectedLabelValue: "0",
-			router:             testRouters,
-		},
-		{
-			name:               "overwritten label",
-			initialLabelKey:    "idx",
-			initialLabelValue:  "111",
-			expectedLabelKey:   "idx",
-			expectedLabelValue: "0",
-			router:             testRouters,
-		},
-		{
-			name:               "existing label not preserved, wrong key",
-			initialLabelKey:    "t",
-			initialLabelValue:  "11",
-			expectedLabelKey:   "t",
-			expectedLabelValue: "",
-			router:             testRouters,
-		},
-		{
-			name:               "existing label preserved",
-			initialLabelKey:    fiber.CtxComponentLabelsKey,
-			initialLabelValue:  fiber.NewLabelsMap().WithLabel("t", "11"),
-			expectedLabelKey:   "t",
-			expectedLabelValue: "11",
-			router:             testRouters,
-		},
-		{
-			name:               "existing label not preserved, unexpected value type",
-			initialLabelKey:    fiber.CtxComponentLabelsKey,
-			initialLabelValue:  map[string]string{"t": "11"},
-			expectedLabelKey:   "t",
-			expectedLabelValue: "",
-			router:             testRouters,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			for _, router := range tt.router {
-				router.SetRoutes(map[string]fiber.Component{
-					"route-a": testutils.NewMockComponent(
-						"route-a",
-						testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "A-OK", nil, nil)}),
-				})
-				ctx := context.Background()
-				if tt.initialLabelKey != nil {
-					ctx = context.WithValue(ctx, tt.initialLabelKey, tt.initialLabelValue)
-				}
-				request := testUtilsHttp.MockReq("POST", "http://localhost:8080/router", "payload")
-				resp, ok := <-router.Dispatch(ctx, request).Iter()
-				assert.True(t, ok)
-				label := strings.Join(resp.Label(tt.expectedLabelKey), ",")
-				assert.Equal(t, tt.expectedLabelValue, label)
-			}
 		})
 	}
 }
