@@ -50,7 +50,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP))}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)}),
@@ -68,7 +68,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 			routes: map[string]fiber.Component{
 				"route-a": testutils.NewMockComponent(
 					"route-a",
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))}),
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP))}),
 				"route-b": testutils.NewMockComponent(
 					"route-b",
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "B-NOK", nil, nil)}),
@@ -77,7 +77,7 @@ func TestLazyRouter_Dispatch(t *testing.T) {
 				"route-a", "route-b",
 			},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(501, "", nil, fiberErrors.ErrRouterStrategyReturnedEmptyRoutes(protocol.HTTP)),
+				testUtilsHttp.MockResp(502, "", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)),
 			},
 			timeout: 100 * time.Millisecond,
 		},

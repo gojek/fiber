@@ -147,7 +147,7 @@ func (fanIn *eagerRouterFanIn) Aggregate(
 					if len(routes) == 0 {
 						masterResponse = NewErrorResponse(errors.ErrRouterStrategyReturnedEmptyRoutes(req.Protocol()))
 					} else {
-						masterResponse = NewErrorResponse(errors.ErrServiceUnavailable(req.Protocol()))
+						masterResponse = NewErrorResponse(errors.ErrNoValidResponseFromRoutes(req.Protocol()))
 					}
 				}
 			}

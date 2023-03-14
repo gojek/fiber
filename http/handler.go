@@ -56,7 +56,7 @@ func (h *Handler) DoRequest(httpReq *http.Request) (fiber.Response, *fiberErrors
 			if ok {
 				return resp, nil
 			}
-			return nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)
+			return nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)
 		case <-time.After(h.options.Timeout):
 			return nil, fiberErrors.ErrRequestTimeout(protocol.HTTP)
 		}

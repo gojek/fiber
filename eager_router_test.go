@@ -59,7 +59,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			name: "primary route failed, receiving from fallback",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)},
@@ -116,7 +116,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			name: "primary route exceeds timeout, fallback route failed, receiving from the next fallback",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{
@@ -140,7 +140,7 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
 					testUtilsHttp.DelayedResponse{
-						Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)),
+						Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)),
 					},
 				},
 				"route-b": {
@@ -159,14 +159,14 @@ func TestEagerRouter_Dispatch(t *testing.T) {
 				"route-a", "route-b", "route-c",
 			},
 			expected: []fiber.Response{
-				testUtilsHttp.MockResp(500, "", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP)),
+				testUtilsHttp.MockResp(502, "", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP)),
 			},
 		},
 		{
 			name: "routing strategy response comes after all routes replied",
 			responses: map[string][]testUtilsHttp.DelayedResponse{
 				"route-a": {
-					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(500, "A-NOK", nil, fiberErrors.ErrServiceUnavailable(protocol.HTTP))},
+					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(502, "A-NOK", nil, fiberErrors.ErrNoValidResponseFromRoutes(protocol.HTTP))},
 				},
 				"route-b": {
 					testUtilsHttp.DelayedResponse{Response: testUtilsHttp.MockResp(200, "B-OK", nil, nil)},

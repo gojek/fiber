@@ -92,12 +92,12 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			request:   newHTTPRequest("POST", "localhost:8080/handler", http.NoBody),
 			responses: []testUtilsHttp.DelayedResponse{},
 			expected: &http.Response{
-				StatusCode: http.StatusServiceUnavailable,
+				StatusCode: http.StatusBadGateway,
 				Header:     http.Header{},
 				Body: makeBody([]byte(
 					`{
-  "code": 503,
-  "error": "fiber: no responses received"
+  "code": 502,
+  "error": "fiber: no valid responses received from routes"
 }`)),
 			},
 			timeout: 100 * time.Millisecond,

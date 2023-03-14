@@ -255,7 +255,7 @@ func TestE2EFromConfig(t *testing.T) {
 				Status: *status.New(codes.Unavailable, ""),
 			},
 			expectedFiberErr: fiber.
-				NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.GRPC)).
+				NewErrorResponse(fiberError.ErrNoValidResponseFromRoutes(protocol.GRPC)).
 				WithLabel("order", []string{route3}...),
 		},
 		{
@@ -264,7 +264,7 @@ func TestE2EFromConfig(t *testing.T) {
 			routesOrder: []string{route3},
 			request:     httpRequest,
 			expectedFiberErr: fiber.
-				NewErrorResponse(fiberError.ErrServiceUnavailable(protocol.HTTP)).
+				NewErrorResponse(fiberError.ErrNoValidResponseFromRoutes(protocol.HTTP)).
 				WithLabel("order", []string{route3}...),
 		},
 	}
