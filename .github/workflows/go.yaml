@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 env:
   GO_VERSION: "1.20"
-  GO_LINT_VERSION: v1.48.0
+  GO_LINT_VERSION: v1.52.2
 
 jobs:
   test:
