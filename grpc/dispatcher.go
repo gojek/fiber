@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-coldbrew/grpcpool"
 	"github.com/gojek/fiber"
 	fiberError "github.com/gojek/fiber/errors"
 	"github.com/gojek/fiber/protocol"
@@ -24,6 +25,8 @@ func init() {
 
 const (
 	TimeoutDefault = time.Second
+	// Number of gRPC connection in a pool
+	ConnPoolCount = 5
 )
 
 type Dispatcher struct {
@@ -33,7 +36,7 @@ type Dispatcher struct {
 	// endpoint is the host+port of the grpc server, eg "127.0.0.1:50050"
 	endpoint string
 	// conn is the grpc connection dialed upon creation of dispatcher
-	conn *grpc.ClientConn
+	conn grpc.ClientConnInterface
 }
 
 type DispatcherConfig struct {
@@ -69,6 +72,7 @@ func (d *Dispatcher) Do(request fiber.Request) fiber.Response {
 		response,
 		grpc.Header(&responseHeader),
 		grpc.CallContentSubtype(codecName),
+		grpc.WaitForReady(true),
 	)
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
@@ -106,7 +110,7 @@ func NewDispatcher(config DispatcherConfig) (*Dispatcher, error) {
 	}
 	serviceMethodStringBuilder.WriteString(config.ServiceMethod)
 
-	conn, err := grpc.DialContext(context.Background(), config.Endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpcpool.DialContext(context.Background(), config.Endpoint, ConnPoolCount, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		// if ok is false, unknown codes.Unknown and Status msg is returned in Status
 		responseStatus, _ := status.FromError(err)

@@ -6,12 +6,12 @@ routes:
   - id: route1
     type: PROXY
     timeout: "2s"
-    endpoint: "http://localhost:5000"
+    endpoint: "http://localhost:5001"
   - id: route2
     type: PROXY
     timeout: "2s"
-    endpoint: "http://localhost:5001"
+    endpoint: "http://localhost:5002"
   - id: route3
     type: PROXY
     timeout: "2s"
-    endpoint: "http://localhost:5002"
+    endpoint: "http://localhost:5003"
