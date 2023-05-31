@@ -3,7 +3,6 @@ package integration_test
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -306,8 +305,6 @@ func TestE2EFromConfig(t *testing.T) {
 
 					assert.True(t, proto.Equal(tt.expectedMessageProto, responseProto), "actual proto response don't match expected")
 				} else {
-					fmt.Println("expected Payload ", string(tt.expectedResponse.Payload()))
-					fmt.Println("resp Payload ", string(resp.Payload()))
 					assert.Equal(t, tt.expectedResponse.Payload(), resp.Payload())
 				}
 			}
