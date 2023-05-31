@@ -2,7 +2,7 @@ package testutils
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -18,7 +18,7 @@ func MockResp(code int, body string, header http.Header, err error) fiber.Respon
 	httpResp := &http.Response{
 		StatusCode: code,
 		Header:     header,
-		Body:       ioutil.NopCloser(bytes.NewReader([]byte(body))),
+		Body:       io.NopCloser(bytes.NewReader([]byte(body))),
 	}
 	return fiberHTTP.NewHTTPResponse(httpResp)
 }

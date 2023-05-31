@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -136,7 +135,7 @@ func TestE2EFromConfig(t *testing.T) {
 
 	httpReq, err := http.NewRequest(
 		http.MethodGet, "",
-		ioutil.NopCloser(bytes.NewReader([]byte{})))
+		io.NopCloser(bytes.NewReader([]byte{})))
 	require.NoError(t, err)
 	httpRequest, err := fiberhttp.NewHTTPRequest(httpReq)
 	require.NoError(t, err)
@@ -315,5 +314,5 @@ func TestE2EFromConfig(t *testing.T) {
 }
 
 func makeBody(body []byte) io.ReadCloser {
-	return ioutil.NopCloser(bytes.NewReader(body))
+	return io.NopCloser(bytes.NewReader(body))
 }

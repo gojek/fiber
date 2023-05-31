@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -38,7 +37,7 @@ func NewHTTPRequest(req *http.Request) (*Request, error) {
 	} else {
 		defer req.Body.Close()
 
-		data, err := ioutil.ReadAll(req.Body)
+		data, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -46,7 +45,7 @@ func NewHTTPRequest(req *http.Request) (*Request, error) {
 		payload = fiber.NewCachedPayload(data)
 		req.GetBody = func() (io.ReadCloser, error) {
 			r := bytes.NewReader(data)
-			return ioutil.NopCloser(r), nil
+			return io.NopCloser(r), nil
 		}
 	}
 
@@ -63,7 +62,7 @@ func (r *Request) Clone() (fiber.Request, error) {
 	}
 
 	proxyRequest.GetBody = func() (io.ReadCloser, error) {
-		return ioutil.NopCloser(bodyReader), nil
+		return io.NopCloser(bodyReader), nil
 	}
 
 	proxyRequest.Header = r.Header()
