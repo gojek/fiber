@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,7 +37,7 @@ func TestNewHandler(t *testing.T) {
 }
 
 func makeBody(body []byte) io.ReadCloser {
-	return ioutil.NopCloser(bytes.NewReader(body))
+	return io.NopCloser(bytes.NewReader(body))
 }
 
 type errorBody struct{}
@@ -49,7 +48,7 @@ func (b *errorBody) Read([]byte) (n int, err error) {
 
 func readBytes(closer io.ReadCloser) []byte {
 	defer closer.Close()
-	data, _ := ioutil.ReadAll(closer)
+	data, _ := io.ReadAll(closer)
 	return data
 }
 
@@ -60,7 +59,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			request: newHTTPRequest(
 				"POST",
 				"localhost:8080/handler",
-				ioutil.NopCloser(bytes.NewBuffer([]byte("request body")))),
+				io.NopCloser(bytes.NewBuffer([]byte("request body")))),
 			responses: []testUtilsHttp.DelayedResponse{
 				{
 					Response: testUtilsHttp.MockResp(

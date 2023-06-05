@@ -1,7 +1,7 @@
 package http_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -68,7 +68,7 @@ func TestNewHTTPResponse(t *testing.T) {
 			name: "error: closed body",
 			response: &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       ioutil.NopCloser(&errorBody{}),
+				Body:       io.NopCloser(&errorBody{}),
 			},
 			expected: struct {
 				payload []byte

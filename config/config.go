@@ -3,8 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -218,7 +218,7 @@ func (c *ProxyConfig) initComponent() (fiber.Component, error) {
 // InitComponentFromConfig takes in the path to a config file, parses the contents
 // and if successful, constructs a fiber Component
 func InitComponentFromConfig(configPath string) (fiber.Component, error) {
-	if yamlFile, err := ioutil.ReadFile(configPath); err != nil {
+	if yamlFile, err := os.ReadFile(configPath); err != nil {
 		return nil, err
 	} else if cfg, err := parseConfig(yamlFile); err != nil {
 		return nil, err

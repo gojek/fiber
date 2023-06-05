@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -81,7 +81,7 @@ func NewHTTPResponse(httpResponse *http.Response) fiber.Response {
 		return fiber.NewErrorResponse(fmt.Errorf("empty response received"))
 	}
 	// Read the response body
-	body, err := ioutil.ReadAll(httpResponse.Body)
+	body, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		return fiber.NewErrorResponse(fmt.Errorf("unable to read response body: %s", err.Error()))
 	}

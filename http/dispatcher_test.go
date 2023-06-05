@@ -3,7 +3,7 @@ package http_test
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -85,7 +85,7 @@ func TestDispatcher_Do(t *testing.T) {
 			request: testUtilsHttp.MockReq("POST", "localhost:8080/dispatcher", ""),
 			response: &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewReader([]byte("OK response"))),
+				Body:       io.NopCloser(bytes.NewReader([]byte("OK response"))),
 			},
 			expected: testUtilsHttp.MockResp(200, "OK response", nil, nil),
 		},

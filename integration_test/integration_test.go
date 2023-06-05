@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -32,9 +31,9 @@ var (
 	httpResponse1 = []byte(`response 1`)
 	httpResponse2 = []byte(`response 2`)
 	httpResponse3 = []byte(`response 3`)
-	httpAddr1     = ":5000"
-	httpAddr2     = ":5001"
-	httpAddr3     = ":5002"
+	httpAddr1     = ":5001"
+	httpAddr2     = ":5002"
+	httpAddr3     = ":5003"
 
 	grpcPort1     = 50555
 	grpcPort2     = 50556
@@ -136,7 +135,7 @@ func TestE2EFromConfig(t *testing.T) {
 
 	httpReq, err := http.NewRequest(
 		http.MethodGet, "",
-		ioutil.NopCloser(bytes.NewReader([]byte{})))
+		io.NopCloser(bytes.NewReader([]byte{})))
 	require.NoError(t, err)
 	httpRequest, err := fiberhttp.NewHTTPRequest(httpReq)
 	require.NoError(t, err)
@@ -297,7 +296,7 @@ func TestE2EFromConfig(t *testing.T) {
 				assert.EqualValues(t, tt.expectedFiberErr, resp)
 			} else {
 				finalResp = tt.expectedResponse
-				require.Equal(t, resp.StatusCode(), tt.expectedResponse.StatusCode())
+				require.Equal(t, tt.expectedResponse.StatusCode(), resp.StatusCode())
 				if tt.request.Protocol() == protocol.GRPC {
 					responseProto := &testproto.PredictValuesResponse{}
 					err = proto.Unmarshal(resp.Payload(), responseProto)
@@ -315,5 +314,5 @@ func TestE2EFromConfig(t *testing.T) {
 }
 
 func makeBody(body []byte) io.ReadCloser {
-	return ioutil.NopCloser(bytes.NewReader(body))
+	return io.NopCloser(bytes.NewReader(body))
 }

@@ -123,6 +123,7 @@ func TestFromConfig(t *testing.T) {
 				assert.True(t,
 					cmp.Equal(tt.expectedComponent, got,
 						cmpopts.IgnoreUnexported(grpc.ClientConn{}, dynamicpb.Message{}),
+						cmpopts.IgnoreInterfaces(struct{ grpc.ClientConnInterface }{}),
 						cmp.AllowUnexported(
 							fiber.BaseComponent{},
 							fiber.Proxy{},
