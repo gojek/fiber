@@ -26,7 +26,7 @@ func init() {
 const (
 	TimeoutDefault = time.Second
 	// Number of gRPC connection in a pool
-	ConnPoolCount = 5
+	ConnPoolCount = 10
 )
 
 type Dispatcher struct {
